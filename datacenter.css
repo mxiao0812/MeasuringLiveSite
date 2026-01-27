@@ -1,0 +1,218 @@
+/*
+  Stylesheet for datacenter.html
+*/
+
+/*************************************************************************************************************/
+
+/* DATA COLLECTION SELECTION */
+
+#selection a h3 {
+  color: black;
+  margin-left: 5px;
+  text-decoration: underline;
+}
+
+/*************************************************************************************************************/
+
+/* MAIN CONTENTS */
+
+main {
+  box-sizing: border-box;
+  display: flex;
+  gap: 1vw;
+  height: 82vh;
+  padding: 1vw;
+  width: 100%;
+}
+
+main.blurred { filter: blur(1px); }
+
+.content-container { height: 100%; }
+
+.table {
+  background-color: white;
+  border-radius: 2vw;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  line-height: 1.3;
+
+  background: linear-gradient(
+    to top,
+    rgba(40, 74, 83, 0.10),
+    rgba(40, 74, 83, 0.08) 20%,
+    rgba(40, 74, 83, 0.06) 40%,
+    rgba(40, 74, 83, 0.04) 60%,
+    rgba(40, 74, 83, 0.02) 80%,
+    rgba(40, 74, 83, 0.0) 100%
+  );
+  margin: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1vw;
+  width: 20%;
+}
+.table h1 {
+  cursor: pointer;
+  margin: 1vh auto;
+  text-align: center;
+}
+.table ul, li {
+  list-style-type: none;
+  margin: 0;
+}
+.table ul {
+  padding: 0.1vh 0;
+}
+.table li {
+  padding-left: 1vw;
+}
+.table li span {
+  font-size: 0.8rem;
+}
+
+li.excluded {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.table,
+#chart-container {
+  position: relative;
+  background-color: white;
+  border-radius: 2vw;
+
+  background: linear-gradient(
+    to top,
+    rgba(40, 74, 83, 0.10),
+    rgba(40, 74, 83, 0.08) 20%,
+    rgba(40, 74, 83, 0.06) 40%,
+    rgba(40, 74, 83, 0.04) 60%,
+    rgba(40, 74, 83, 0.02) 80%,
+    rgba(40, 74, 83, 0.0) 100%
+  );
+
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.12),
+    0 8px 16px rgba(0, 0, 0, 0.12),
+    0 16px 32px rgba(0, 0, 0, 0.08);
+
+  border: 1px solid rgba(255, 255, 255, 0.6);
+
+  line-height: 1.3;
+  margin: 0;
+  padding: 1vw;
+
+  transition:
+    box-shadow 0.25s ease,
+    transform 0.25s ease;
+}
+
+.table:hover,
+#chart-container:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.14),
+    0 12px 24px rgba(0, 0, 0, 0.14),
+    0 24px 48px rgba(0, 0, 0, 0.10);
+}
+
+.table::before,
+#chart-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+  pointer-events: none;
+}
+
+/* Chart */
+#chart-container {
+  align-items: center;
+  background-color: white;
+  border-radius: 2vw;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: 60%;
+}
+
+/* Chart Download */
+#download-button-container {
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  height: 15%;
+  justify-content: space-between;
+  padding: 1vh 1vw 2vh;
+  width: 100%;
+}
+
+#download-button-container button { font-size: 0.8rem; }
+
+
+/* Chart Canvas */
+#data-chart {
+  box-sizing: border-box;
+  height: 80%;
+  min-height: 80%;
+  padding: 1%;
+  width: 100%; 
+}
+
+/*************************************************************************************************************/
+
+/* YEAR SELECT */
+
+/* Update Chart */
+#update-chart {
+  cursor: pointer;
+  bottom: 9vh;
+  font-size: 0.8rem;
+  margin: none;
+  visibility: hidden;
+  width: fit-content;
+  z-index: 999;
+}
+
+/* Slider */
+.slider-thumb {
+  background-color: rgba(40, 74, 83);
+  border-radius: 2vh;
+  bottom: 4vh;
+  height: 4vh;
+  position: fixed;
+  width: 4vh;
+  z-index: 2;
+}
+.slider-thumb:hover { cursor: grab; }
+#slider-thumb-left{ left: 4vw; }
+#slider-thumb-right{ left: 94vw; }
+
+#slider-years {
+  bottom: 0.75vh;
+  font-size: 1.5rem;
+  font-weight: bold;
+  left: 50vw;
+  position: fixed;
+  transform: translateX(-50%);
+}
+#slider-track-background {
+  background-color: gray;
+  border-radius: 1vh;
+  bottom: 5vh;
+  display: flex;
+  height: 2vh;
+  left: 5vw;
+  position: fixed;
+  width: 90vw;
+}
+#slider-track {
+  background-color: rgba(40, 74, 83);
+  border-radius: 1vh;
+  bottom: 5vh;
+  display: flex;
+  height: 2vh;
+  left: 5vw;
+  position: fixed;
+  width: 90vw;
+}

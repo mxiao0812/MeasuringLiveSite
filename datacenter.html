@@ -1,0 +1,899 @@
+<!--
+Created and maintained by student research assistants at the
+          HELLER-HURWICZ ECONOMICS INSTITUTE
+        University of Minnesota - Twin Cities
+
+Last Updated: 12/20/2025
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title> Data Center </title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Font-Family -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap">
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="main.css">
+  <link rel="stylesheet" href="datacenter.css">
+  <!-- Icon -->
+  <link rel="icon" type="image/png" href="images/HHEI.png">
+  <!-- Charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<!-------------------------------------------------------------------------------------------------------------------->
+
+<body>
+
+<!-- RIBBON -->
+<header>
+
+  <!-- Selection Toggle, Title, Author -->
+  <div id="header-left">
+
+    <!-- Data Collection Selection Toggle -->
+    <button id="toggle-select"
+      class="pressable"
+      title="Toggle Dataset Selection Menu"
+      aria-label="Toggle Dataset Selection Menu" 
+      onclick="toggleSelection()">
+      ☰
+    </button>
+
+    <!-- GitHub Repository -->
+    <a href="https://github.com/IsaiahDal/isaiahdal.github.io" target="_blank" title="Site Repository" class="pressable">
+      <img id="github-link"
+        alt="Site Repository" 
+        src="https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png">
+    </a>
+
+    <!-- Site Name & Author -->
+    <h1>
+      <a href="https://www.aeaweb.org/articles?id=10.1257/mac.2.4.88" target="_blank">
+        Measuring Business Productivity and Value
+      </a><br>
+      <a id="author" href="http://users.econ.umn.edu/~erm/" target="_blank">
+        Ellen McGrattan
+      </a>
+    </h1>
+
+  </div>
+  
+  <!-- Tab Navigation -->
+  <div id="tab-nav" role="tablist">   
+    <button
+      class="tab-btn pressable"
+      onclick="location.href='index.html';"
+      role="tab"
+      aria-selected="false">
+      Lectures
+    </button>
+    <button class="tab-btn active" role="tab" aria-selected="true"> Data Center </button> 
+  </div>
+
+  <!-- HHEI Web Link -->
+  <div id="hhei-link">
+    <a href="https://cla.umn.edu/heller-hurwicz" target="_blank"  class="pressable">
+      <img 
+      src="https://cla.umn.edu/sites/cla.umn.edu/files/HHEI%20wordmark.png"
+      alt="Heller-Hurwicz Economics Institute" 
+      id="hhei-logo">
+    </a>
+  </div>
+
+</header>
+
+<!------------------------------------------------------------------------------------------------------------>
+
+<!-- DATA COLLECTION SELECTION -->
+<div id="selection" class="hidden">
+
+  <h2> Datasets </h2>
+
+  <!-- IRS Statistics of Income  -->
+  <a href="https://www.irs.gov/statistics/soi-tax-stats-statistics-of-income" target="_blank">
+    <h3> IRS Statistics of Income (SOI) </h3>
+  </a>
+
+  <!-- All Corporations -->
+  <button id="allcorp" class="selection-entry active" onclick=
+    "buildTables(
+      'allcorp',
+      'Total assets', 
+      'Less:  Cost of treasury stock',
+      headers = ['Total assets', 'Total liabilities'],
+      '𝘚𝘵𝘢𝘵𝘪𝘴𝘵𝘪𝘤𝘴 𝘰𝘧 𝘐𝘯𝘤𝘰𝘮𝘦. Internal Revenue Sevice. Washington, D.C.'
+    ); highlightDataset(this);"
+  ><p> All Corportations </p></button>
+
+  <!-- S Corporations -->
+  <button id="scorp" class="selection-entry" onclick=
+    "buildTables(
+      'scorp',
+      'Total assets', 
+      'Less:  Cost of treasury stock (1966-2019)',
+      headers = ['Total assets', 'Total liabilities'],
+      '𝘚𝘵𝘢𝘵𝘪𝘴𝘵𝘪𝘤𝘴 𝘰𝘧 𝘐𝘯𝘤𝘰𝘮𝘦. Internal Revenue Sevice. Washington, D.C.'
+    ); highlightDataset(this);"
+  ><p> S Corportations </p></button>
+
+  <!-- Partnerships -->
+  <button id="partners" class="selection-entry" onclick=
+    "buildTables(
+      'partners',
+      'Total assets', 
+      'Partners\' capital accounts',
+      headers = ['Total assets', 'Total liabilities and capital'],
+      '𝘚𝘵𝘢𝘵𝘪𝘴𝘵𝘪𝘤𝘴 𝘰𝘧 𝘐𝘯𝘤𝘰𝘮𝘦. Internal Revenue Sevice. Washington, D.C.'
+    ); highlightDataset(this);"
+  > <p> Partnerships </p> </button>
+
+
+  <!-- BEA National Income and Product Accounts (NIPA) -->
+  <a
+    href="https://apps.bea.gov/iTable/?isuri=1&reqid=19&step=4&categories=flatfiles&nipa_table_list=1"
+    target="_blank">
+    <h3> BEA National Income and Product Accounts (NIPA) </h3>
+  </a>
+
+  <button id="DomesticProductAndIncome" class="selection-entry" onclick=
+    "buildTables(
+      'GDPGDI',
+      'Gross domestic product', 
+      'Statistical discrepancy',
+      headers = ['Gross domestic product', 'Gross domestic income'],
+      '𝘕𝘢𝘵𝘪𝘰𝘯𝘢𝘭 𝘐𝘯𝘤𝘰𝘮𝘦 𝘢𝘯𝘥 𝘗𝘳𝘰𝘥𝘶𝘤𝘵 𝘈𝘤𝘤𝘰𝘶𝘯𝘵𝘴. U.S. Bureau of Economic Analysis.'
+    ); highlightDataset(this);"
+  ><p> Gross Domestic Product And Income </p></button>
+
+  <!-- Add new datasets here -->
+
+  <button id="AdjustedAccounts" class="selection-entry" onclick=
+    "buildTables(
+      'adjustedgdpgdi',
+      'Adjusted GDP', 
+      'Adjusted GDI',
+      headers = ['Adjusted GDP', 'Adjusted GDI'],
+      '𝘕𝘢𝘵𝘪𝘰𝘯𝘢𝘭 𝘐𝘯𝘤𝘰𝘮𝘦 𝘢𝘯𝘥 𝘗𝘳𝘰𝘥𝘶𝘤𝘵 𝘈𝘤𝘤𝘰𝘶𝘯𝘵𝘴. U.S. Bureau of Economic Analysis.'
+    ); highlightDataset(this);"
+  ><p> Adjusted Gross Domestic Product And Income </p></button>
+
+</div>
+
+<!------------------------------------------------------------------------------------------------------------>
+
+<!-- MAIN CONTENTS -->
+
+<main>
+
+  <div id="table-left" class="table"></div>
+    
+  <!-- Chart -->
+  <div id="chart-container" class="content-container">
+
+    <!-- Chart Download -->
+    <div id="download-button-container">
+      <button id="download-chart"> Download Chart </button>
+      <button id="download-series"> Download Selected Series </button>
+      <button id="download-full"> Download Full Dataset </button>
+    </div>
+
+    <!-- Chart Canvas-->
+    <canvas id="data-chart"></canvas>
+
+    <!-- Update Chart -->
+    <button id="update-chart">Update Chart</button>
+
+  </div>
+
+  <div id="table-right" class="table"></div>
+
+</main>
+
+<!------------------------------------------------------------------------------------------------------------>
+
+<!-- YEAR SELECT -->
+<div id="slider-years"> 1959 - 2022 </div>
+<div id="slider-thumb-left" class="slider-thumb"></div>
+<div id="slider-track-background"></div>
+<div id="slider-track"></div>
+<div id="slider-thumb-right" class="slider-thumb"></div>
+
+<!------------------------------------------------------------------------------------------------------------>
+
+<script>
+
+  /* HTML ELEMENTS */
+
+  /* RIBBON */
+  const selectionToggle = document.getElementById('toggle-select');
+
+  /* DATA COLLECTION SELECTION */
+  const selection = document.getElementById('selection');
+  const selectionEntries = selection.querySelectorAll('.selection-entry');
+
+  /* MAIN CONTENTS */
+  const main = document.querySelector('main');
+
+  /* Tables */
+  const leftTable = document.getElementById('table-left');
+  const rightTable = document.getElementById('table-right');
+  
+  /* Chart */
+  const downloadChart = document.getElementById("download-chart");
+  const downloadSeries = document.getElementById("download-series");
+  const downloadFull = document.getElementById("download-full");
+  const dataChart = document.getElementById("data-chart");
+  const applyBtn = document.getElementById("update-chart");
+
+  /* YEAR SELECT */
+  const sliderYears = document.getElementById("slider-years");
+  const track = document.getElementById("slider-track");
+  const leftThumb = document.getElementById("slider-thumb-left");
+  const rightThumb = document.getElementById("slider-thumb-right");
+
+
+/*********************************************************************************************************************/
+
+  /* RIBBON */
+
+  /* Dataset Selection Toggle */
+
+  let isHidden = true;
+
+  /**
+   * Opens/closes dataset selection menu.
+  */
+  function toggleSelection() {
+    // Show selection, hide previous/next buttons, and blur tab contents when selection open
+    selection.classList.toggle('hidden');
+    main.classList.toggle('blurred');
+
+    // Update toggle button
+    isHidden = !isHidden;
+    selectionToggle.textContent = isHidden ? "☰" : "X";
+  }
+
+/*------------------------------------------------------------------------------------------------------------*/
+
+  /* DATA COLLECTION SELECTION */
+
+  // Number datasets
+  selectionEntries.forEach((item, index) => {
+      item.querySelector('p').textContent = `${index + 1}. ${item.textContent}`
+  });
+
+
+  // Bold dataset on click
+  function highlightDataset(dataset) {
+    selectionEntries.forEach(item => item.classList.remove('active'));
+    dataset.classList.add('active');
+  }
+
+/*------------------------------------------------------------------------------------------------------------*/
+
+  /* MAIN CONTENTS */
+
+  /* Tables */
+
+  // Data arrays
+  let rawData = [];
+  let adjustedData = [];
+  let csvHeaders = [];
+
+  // Track ancestor variables in 2D array and excluded series in a new set
+  const hierarchy = [];
+  const excludedSeries = new Set();
+  
+  // Track current data source
+  let curSource;
+
+  /**
+   *  Parses a single CSV line into an array.
+   * 
+   *  @param {String} line - the raw text of the CSV line.
+   * 
+   *  @returns {Array} result - an array of the values in the CSV line.
+   */ 
+  function parseline(line) {
+    const result = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      const next = line[i + 1];
+
+      if (char === '"' && inQuotes && next === '"') { // Escaped quote
+        current += '"';
+        i++;
+      } else if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        if (result.length === 0) { // Keep first column as string (with spaces for indentation)
+          result.push(current); 
+        } else {                   // Parse all other columns to float
+          const cleaned = current.trim().replace(/,/g, '');
+          const parsed = parseFloat(cleaned);
+          result.push(isNaN(parsed) ? current : parsed);
+        }
+        current = "";
+      } else {
+        current += char;
+      }
+    }
+
+    // Clean final value
+    const parsed = parseFloat(current.trim().replace(/,/g, ''));
+    result.push(isNaN(parsed) ? current : parsed);
+
+    return result;
+  }
+
+  /**
+   *  Loads selected lines from csv and parses into plot-ready format.
+   * 
+   *  @param {String} fname - the name of the chosen CSV file.
+   * 
+   *  @returns
+   *    {Array<String>} csvHeaders - all values in the first row of the CSV.
+   *    {Array<Array<String>>} rawData - a 2D array of all other values in the CSV.
+   */ 
+  async function loadCSV(fname) {
+
+    // Load and clean CSV data
+    const text = await fetch(`DATA/${fname}.csv`).then(r => r.text());
+    const csv = text;
+    const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
+
+    // Parse CSV to plot-ready format
+    rawData = [];
+    rows.forEach((row, idx) => {
+      const vals = parseline(row); // keep spaces for indentation
+      if (idx === 0) csvHeaders = vals;
+      if (idx === 0) csvHeaders = vals;
+      else {
+        // Store indentation and trim variable name
+        const rawValue = vals[0];
+        const value = rawValue.trim();
+        const indent = rawValue.match(/^\s*/)[0].length;
+        vals[0] = value;
+        rawData.push({
+          cols: vals,
+          indent
+        });
+      }
+    });
+    
+    return { rawData, csvHeaders };
+  }
+
+  /**
+   *  Builds two tables from CSV data that plot a selected variable when clicked. Dynamically creates
+   *    hierarchical structure of table based on the level of indentation used in the CSV.
+   * 
+   *  @param {String} fname - the filename of the CSV file.
+   *  @param {String} startRow - the text content of the first cell of the first CSV row you wish to use.
+   *  @param {String} endRow - the text content of the final cell of the first CSV row you wish to use.
+   *  @param {Array<String>} headers - a string array of the headers for each of the two tables.
+   *  @param {String} source - the source of the currently selected dataset 
+   *      - E.g., Statistics of Income. Internal Revenue Service.
+   * 
+   *  Note: the startRow nor endRow strings should EXCLUDE leading or trailing spaces
+  */ 
+  async function buildTables(fname, startRow, endRow, headers, source) {
+    
+    const { rawData, csvHeaders } = await loadCSV(fname); // Load data
+
+    // Clear tables & data
+    leftTable.innerHTML = '';
+    rightTable.innerHTML = '';
+    excludedSeries.clear();
+    adjustedData = [];
+    const stack = [];
+
+    // Initialize state variables
+    let startRowFound = false;
+    let endRowFound = false;
+    let sectionContainer = leftTable;
+    let leftHeaderAssigned = false;
+
+    rawData.forEach((row, idx) => {
+
+      // Get variable name and indent
+      const value = row.cols[0];
+      const indent = row.indent;
+
+      if (value === startRow) startRowFound = true;
+      if (!startRowFound || endRowFound) return; // Skip row if before start or after end
+      if (value.includes("Addendum")) return;    // Skip designated rows
+
+      // Variable names
+      if (headers.includes(value)) {
+
+        // Switch to right table for second header
+        sectionContainer = leftHeaderAssigned ? rightTable : leftTable;
+        leftHeaderAssigned = true;
+
+        // Construct table header
+        const h1 = document.createElement("h1");
+        h1.textContent = value;
+        sectionContainer.appendChild(h1);
+        h1.addEventListener("click", () => plotVariable(value));
+
+        stack.length = 0; // Reset stack
+
+      } else { // Non-header value
+
+        // Pop variables from the stack with a lower indent than current variable thus not an ancestor)
+        while (stack.length && indent <= stack[stack.length - 1].indent) {
+          stack.pop();
+        }
+
+        // Add to parent variable's list (if it exists)
+        let parentUl = stack.length
+          ? stack[stack.length - 1].var
+          : null;
+
+        // Create new unordered list & add to stack if no parent
+        if (!parentUl) {
+          parentUl = document.createElement("ul");
+          sectionContainer.appendChild(parentUl);
+          stack.push({ var: parentUl, indent });
+        }
+
+        // Get next row indent to determine if current value has descendant variables
+        const nextRow = rawData[idx + 1];
+        const nextIndent = nextRow ? nextRow.indent : -1;
+        const willHaveChildren = nextIndent > indent;
+
+        // Create new list item and add to parent list
+        const li = nestedList(value, willHaveChildren);
+        parentUl.appendChild(li);
+
+        // Create new unordered list & add to stack if current value has descendant variables
+        if (willHaveChildren) {
+          const newUl = document.createElement("ul");
+          newUl.style.display = "none"; // hide initially
+          li.appendChild(newUl);
+          stack.push({var: newUl, indent: (indent + 1)});
+        }
+
+      }
+
+      if (value === endRow) endRowFound = true; // Check if designated last row found
+    });
+
+    // Additional state updates
+
+    // Reset slider
+    const years = csvHeaders.slice(1).map(Number).filter(y => !isNaN(y));
+    appliedStart = startYear = minYear = Math.min(...years);
+    appliedEnd = endYear = maxYear = Math.max(...years);
+    sliderYears.textContent = `${minYear} - ${maxYear}`;
+    resetSlider();
+
+    curSource = source; // Update chart source
+
+    // Plot first variable
+    const firstRow = rawData.find(r => r.cols[0].trim() === startRow);
+    if (firstRow) plotVariable(firstRow.cols[0]);
+
+    toggleSelection(); // Toggle dataset selection menu
+
+    /**
+     *  Builds two tables from CSV data that plot a selected variable when clicked. Dynamically creates
+     *  hierarchical structure of table based on the level of indentation used in the CSV.
+     * 
+     *  @param {String} text - the text content of the list item.
+     *  @param {Boolean} hasChildren - indicates whether the current list item has descendant (nested) items.
+     * 
+     *  @returns {HTMLElement} li - an HTML list item
+    */ 
+    function nestedList(text, hasChildren) {
+
+      // Create list item
+      const li = document.createElement("li");
+      li.style.cursor = "pointer";
+
+      // Add arrow for dropdown if li has descendants
+      let arrow;
+      if (hasChildren) {
+        arrow = document.createElement("span");
+        arrow.textContent = "▶ ";
+        arrow.style.userSelect = "none";
+        li.appendChild(arrow);
+
+        // Open/close dropdown on click
+        arrow.addEventListener("click", e => {
+          e.stopPropagation();
+          const childUl = li.querySelector("ul");
+          if (!childUl) return;
+          if (childUl.style.display === "none") {
+            childUl.style.display = "block";
+            arrow.textContent = "▼ ";
+          } else {
+            childUl.style.display = "none";
+            arrow.textContent = "▶ ";
+          }
+        });
+      }
+
+      // Button to exclude nested variables on click
+      const excludeBtn = document.createElement("span");
+      excludeBtn.textContent = "X ";
+      excludeBtn.style.color = "red"
+      li.appendChild(excludeBtn);
+
+      // Text for list element
+      const label = document.createElement("span");
+      label.textContent = text;
+      li.appendChild(label);
+      li.dataset.plotValue = text;
+
+      // Strikethrough label and excluded nested variables on click
+      excludeBtn.addEventListener("click", e => {
+        e.stopPropagation();
+        toggleExclude(text);
+        label.style.textDecoration = label.style.textDecoration === "line-through" ? "none" : "line-through";
+      });
+
+      // Plot variable on click
+      label.addEventListener("click", e => {
+        e.stopPropagation();
+        plotVariable(li.dataset.plotValue);
+      });
+
+      return li;
+    }
+
+  }
+
+  /**
+   *  Function to exclude/include value of nested variables on click.
+   * 
+   *  @param {String} variable - the text of the nested variable to be excluded
+   * 
+   */ 
+  function toggleExclude(variable) {
+
+    // Toggle whether variable is included or excluded
+    if (excludedSeries.has(variable)) {
+      excludedSeries.delete(variable);
+    } else {
+      excludedSeries.add(variable);
+    }
+
+    // Reset adjusted data seriees
+    adjustedData = [];
+    const stack = [];
+
+    // Reconstruct adjusted data series
+    rawData.forEach(row => {
+      const newRow = { cols: [...row.cols], indent: row.indent };
+
+      // Pop ancestors that are no longer parents
+      while (stack.length && stack[stack.length - 1].indent >= row.indent) {
+        stack.pop();
+      }
+
+      const add = row.cols[0].startsWith("Less:");    // Whether to add variable (if normally subtracted)
+
+      // Subtract value from all ancestors in stack
+      if (excludedSeries.has(row.cols[0])) {
+        stack.forEach(ancestor => {
+          for (let i = 1; i < ancestor.cols.length; i++) {
+            let val = parseFloat(row.cols[i]);
+            val = isNaN(val) ? 0 : val;               // Set val to 0 if NaN
+            ancestor.cols[i] += add ? val : -val;   
+          }
+        });
+      }
+
+      // Push current row to stack as potential ancestor
+      stack.push(newRow);
+      adjustedData.push(newRow);
+
+    });
+
+    if (currentVariable) plotVariable(currentVariable); // Update chart accordingly
+  }
+
+
+  /* Chart */
+
+  let chart;
+
+  /* Chart Download */
+
+  downloadChart.addEventListener("click", () => {
+    if (!chart) return;
+
+    // Create png of current chart and download
+    const link = document.createElement("a");
+    link.download = `${currentVariable}.png`;
+    link.href = chart.toBase64Image();
+    link.click();
+  });
+
+  // Download raw and adjusted values for selected series
+  downloadSeries.addEventListener("click", () => {
+    if (!currentVariable) return;
+
+    const rowRaw = rawData.find(r => r.cols[0] === currentVariable);
+    if (!rowRaw) return;
+
+    const rowAdjusted = adjustedData.find(r => r.cols[0] === currentVariable);
+
+    const years = csvHeaders.slice(1).map(Number);
+    const rawVals = rowRaw.cols.slice(1).map(v => parseFloat(v));
+    const adjVals = rowAdjusted
+      ? rowAdjusted.cols.slice(1).map(v => parseFloat(v))
+      : rawVals;
+
+    let output = "Year,Raw,Adjusted\n";
+
+    for (let i = 0; i < years.length; i++) {
+      if (years[i] >= startYear && years[i] <= endYear) {
+        output += `${years[i]},${rawVals[i]},${adjVals[i]}\n`;
+      }
+    }
+
+    const blob = new Blob([output], { type: "text/csv" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${currentVariable}_${startYear}-${endYear}_raw_adjusted.csv`;
+    link.click();
+  });
+
+
+  // Download the full selected dataset
+  downloadFull.addEventListener("click", () => {
+    if (!csvHeaders.length || !rawData.length) return;
+
+    let output = "";
+
+    // Header row
+    output += csvHeaders.join(",") + "\n";
+
+    // Data rows (preserve indentation visually if you want)
+    rawData.forEach(row => {
+      const indent = " ".repeat(row.indent);
+      const cols = [...row.cols];
+      cols[0] = indent + cols[0];
+      output += cols.join(",") + "\n";
+    });
+
+    const blob = new Blob([output], { type: "text/csv" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "full_dataset.csv";
+    link.click();
+  });
+
+
+  /* Chart Canvas */
+
+  let currentVariable = null;
+
+  /**
+   *  Plots the input variable.
+   *  
+   *  @param {String} label - the variable to be plotted
+   */ 
+  function plotVariable(label) {
+    currentVariable = label;
+    updateChart();
+  }
+
+  /**
+   *  Updates chart variable and year range.
+   */ 
+  function updateChart() {
+    if (!currentVariable) return;
+
+    // Get current variable
+    const row = rawData.find(r => r.cols[0] === currentVariable);
+    if (!row) return;
+
+    // Get selected years
+    const allYears = csvHeaders.slice(1).map(Number);
+    const allValues = row.cols.slice(1).map(v => parseFloat(v));
+    
+    // Pushdata from selected years into arrays to plot
+    const filteredYears = [];
+    const filteredValues = [];
+    for (let i = 0; i < allYears.length; i++) {
+      const y = allYears[i];
+      if (y >= startYear && y <= endYear) {
+        filteredYears.push(y);
+        filteredValues.push(allValues[i]);
+      }
+    }
+    
+    renderChart(currentVariable, filteredYears, filteredValues); // Update chart
+  }
+
+
+
+  function renderChart(label, years, values) {
+
+    // Rest chart
+    const ctx = dataChart;
+    if (chart) chart.destroy();
+
+    // Get adjusted values for variable
+    const rowAdjusted = adjustedData.find(r => r.cols[0] === label);
+    const adjustedValues = rowAdjusted ? rowAdjusted.cols.slice(1).map(Number) : values;
+
+    // Construct chart
+    chart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: years, // Years on x-axis
+        datasets: [
+          { label: `Raw`, data: values, borderColor: "blue", borderWidth: 2 },
+          { label: `Adjusted`, data: adjustedValues, borderColor: "red", borderWidth: 2, borderDash: [5,5] }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {  // Variable name as title
+          title: { display: true, text: label, font: { size: 20 } },
+          legend: { display: true }
+        },
+        scales: { // Display source of data
+          x: { title: {display: true, text: `Source ${curSource}`} }, 
+          y: { ticks: { callback: v => v.toExponential(2) } }
+        }
+      }
+    });
+  }
+
+  /* Update Chart */
+  // Update years and hide button on click
+  applyBtn.addEventListener("click", () => {
+    appliedStart = startYear;
+    appliedEnd   = endYear;
+
+    updateChart();
+
+    applyBtn.style.visibility = "hidden";
+  });
+
+/*------------------------------------------------------------------------------------------------------------*/
+
+  /* YEAR SELECT */
+  let activeThumb = null;
+
+  /**
+   *  Makes active slider thumb resposive on click
+   */ 
+  function pointerDown(e) {
+    activeThumb = e.target;
+
+    document.body.style.cursor = "grabbing";
+    activeThumb.classList.add("dragging");
+
+    document.body.style.userSelect = "none";
+
+    document.addEventListener("pointermove", pointerMove);
+    document.addEventListener("pointerup", pointerUp);
+  }
+
+  /**
+   *  Adjusts track and years on drag.
+   */ 
+  function pointerMove(e) {
+    if (!activeThumb) return;
+
+    const thumbWidth = activeThumb.getBoundingClientRect().width;
+
+    // Constrain inside 4vw–94vw
+    const minX = window.innerWidth * 0.04 + thumbWidth / 2;
+    const maxX = window.innerWidth * 0.94 + thumbWidth / 2;
+
+    let x = Math.max(minX, Math.min(e.clientX, maxX));
+
+    const leftRect = leftThumb.getBoundingClientRect();
+    const rightRect = rightThumb.getBoundingClientRect();
+
+    const rightLimit = rightRect.left + thumbWidth / 2;
+    const leftLimit = leftRect.right - thumbWidth / 2;
+
+
+    if (activeThumb === leftThumb) {
+      // Prevent left thumb from going past right thumb
+      x = Math.min(x, rightLimit);
+      track.style.left = `${x}px`;
+      track.style.width = `${rightLimit - x}px`;
+    }
+
+    if (activeThumb === rightThumb) {
+      // Prevent right thumb from going past left thumb
+      x = Math.max(x, leftLimit);
+      track.style.width = `${x - leftLimit}px`;
+    }
+
+    activeThumb.style.left = `${x - thumbWidth / 2}px`;
+    activeThumb.style.zIndex = "10";
+
+
+    // Update years live based on thumb positions
+    const totalYears = maxYear - minYear;
+
+    const trackMin = window.innerWidth * 0.04;
+    const trackMax = window.innerWidth * 0.94;
+    const trackWidth = trackMax - trackMin;
+
+    const leftPx = leftThumb.getBoundingClientRect().left;
+    const rightPx = rightThumb.getBoundingClientRect().left;
+
+    const leftPercent = (leftPx - trackMin) / trackWidth;
+    const rightPercent = (rightPx - trackMin) / trackWidth;
+
+    const leftYear = Math.round(minYear + leftPercent * totalYears);
+    const rightYear = Math.round(minYear + rightPercent * totalYears);
+
+    sliderYears.textContent = `${leftYear} - ${rightYear}`;
+
+    startYear = leftYear;
+    endYear   = rightYear;
+
+    // If changed, show update button
+    if (startYear !== appliedStart || endYear !== appliedEnd) {
+      applyBtn.style.visibility = "visible";
+    }
+
+  }
+
+  /**
+   *  Removes event listeners when click lifted.
+   */ 
+  function pointerUp() {
+    if (!activeThumb) return;
+
+    activeThumb = null;
+    document.body.style.userSelect = "auto";
+    document.removeEventListener("pointermove", pointerMove);
+    document.removeEventListener("pointerup", pointerUp);
+
+    document.body.style.cursor = "default";
+    leftThumb.classList.remove("dragging");
+    rightThumb.classList.remove("dragging");
+  }
+
+  [leftThumb, rightThumb].forEach(thumb => {
+    thumb.addEventListener("pointerdown", pointerDown);
+  });
+
+  /**
+   *  Resets the slider.
+   */ 
+  function resetSlider() {
+    const trackMin = window.innerWidth * 0.04;
+    const trackMax = window.innerWidth * 0.94;
+    const thumbWidth = leftThumb.getBoundingClientRect().width;
+
+    leftThumb.style.left = `${trackMin - thumbWidth / 2}px`;
+    rightThumb.style.left = `${trackMax - thumbWidth / 2}px`;
+
+    track.style.left = `${trackMin}px`;
+    track.style.width = `${trackMax - trackMin}px`;
+  }
+
+  // Build first table 
+  buildTables(
+    "allcorp",
+    "Total assets", 
+    "Less:  Cost of treasury stock",
+    headers = ["Total assets", "Total liabilities"],
+    '𝘚𝘵𝘢𝘵𝘪𝘴𝘵𝘪𝘤𝘴 𝘰𝘧 𝘐𝘯𝘤𝘰𝘮𝘦. Internal Revenue Sevice. Washington, D.C.'
+  );
+
+</script>
+</body>
+</html>
