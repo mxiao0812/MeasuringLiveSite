@@ -55,8 +55,9 @@ We now show that this basic growth model generates grossly counterfactual predic
 > **Note:** Discussions of US data sources, adjustments made to construct the empirical counterparts of the model variables, the parameterization used for the model, and the parameter values used to compute the equilibrium path here are summarized in the [Appendix](https://users.cla.umn.edu/~erm/data/sr369/APPENDIX/sr395_0909.pdf) to [McGrattan and Prescott (2010)](https://www.aeaweb.org/articles?id=10.1257/mac.2.4.88).
 "
 
-# ╔═╡ 2ad4e58f-0d7e-4667-9823-b0a13c6892dd
-md"**β:**"
+# ╔═╡ a54a07b4-cfd3-4f18-9320-25cd2fdb3d9e
+md"Choose $\boldsymbol{\beta}$ (default value $\boldsymbol{\beta} = 0.98):$ 
+"
 
 # ╔═╡ dd9da155-a8b1-4343-a2e9-9a63d02704df
 # Set fixed parameter values
@@ -361,9 +362,8 @@ In Figure 1, we plot the model’s predicted per capita hours of work along with
 """
 
 # ╔═╡ 178c9d53-940f-46c0-923c-1e18e34647c6
-
 function plot1()
-	p1 = Plots.plot(years, hdat ./ hdat[1] .* 100, lw=2, color=:black, label="US Hours", size=(550,550))
+	p1 = Plots.plot(years, hdat ./ hdat[1] .* 100, lw=2, color=:black, label="US Hours", size=(700,550))
 	Plots.plot!(p1, years, ht ./ ht[1] .* 100, lw=2, color=:red, marker=:utriangle, label="Model Hours")
 	ylabel!("Index"); title!("\nFigure 1. US Per Capita Hours and Model Prediction");
 	xlims!(p1, 1990, 2004) 
@@ -383,7 +383,7 @@ economy should have been depressed. This counterfactual prediction arises from t
 
 # ╔═╡ 52b49bfc-9258-4a29-bcd1-d93fb65cc549
 function plot2()
-	p2 = Plots.plot(years, ydat ./ ydat[1] .* 100, lw=2, color=:black, label="US GDP", size=(550,550))
+	p2 = Plots.plot(years, ydat ./ ydat[1] .* 100, lw=2, color=:black, label="US GDP", size=(700,550))
 	Plots.plot!(p2, years, yt   ./ yt[1]   .* 100, lw=2, color=:red, marker=:utriangle, label="Model GDP")
 	ylabel!("Index"); title!("\nFigure 2. US Per Capita Real GDP and Model Prediction (/1.02^t)")
 	xlims!(p2, 1990, 2004) 
@@ -1697,8 +1697,8 @@ version = "1.9.2+0"
 
 # ╔═╡ Cell order:
 # ╟─08e50dde-b685-11f0-adeb-bdcc51244b10
-# ╠═1364f195-24f6-47e6-9a46-33690195d836
-# ╟─2ad4e58f-0d7e-4667-9823-b0a13c6892dd
+# ╟─1364f195-24f6-47e6-9a46-33690195d836
+# ╟─a54a07b4-cfd3-4f18-9320-25cd2fdb3d9e
 # ╟─ad79fec6-01ae-4b0d-901c-66d21de44a20
 # ╠═dd9da155-a8b1-4343-a2e9-9a63d02704df
 # ╠═b82d475c-87b6-44b3-9b4b-c98b08bd8b40
