@@ -216,3 +216,8 @@ li.excluded {
   position: fixed;
   width: 90vw;
 }
+#chart-container canvas#data-chart {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 10;
+}

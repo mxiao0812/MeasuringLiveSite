@@ -741,6 +741,12 @@ Last Updated: 12/20/2025
       options: {
         responsive: true,
         maintainAspectRatio: false,
+
+        interaction: { // Show tooltips
+          mode: "index",
+          intersect: false
+        },
+
         plugins: {  // Variable name as title
           title: { display: true, text: label, font: { size: 20 } },
           legend: { display: true }
