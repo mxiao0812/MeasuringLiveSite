@@ -385,7 +385,7 @@ economy should have been depressed. This counterfactual prediction arises from t
 function plot2()
 	p2 = Plots.plot(years, ydat ./ ydat[1] .* 100, lw=2, color=:black, label="US GDP", size=(550,550))
 	Plots.plot!(p2, years, yt   ./ yt[1]   .* 100, lw=2, color=:red, marker=:utriangle, label="Model GDP")
-	ylabel!("Index"); title!("\nUS Per Capita Real GDP and Model Prediction (/1.02^t)")
+	ylabel!("Index"); title!("\nFigure 2. US Per Capita Real GDP and Model Prediction (/1.02^t)")
 	xlims!(p2, 1990, 2004) 
 end
 
