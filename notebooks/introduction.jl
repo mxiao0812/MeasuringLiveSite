@@ -66,7 +66,7 @@ For a brief introduction to working with Pluto, consult the [official documentat
 ## 2 Downloading Data and Code Files
 
 > **Quick Setup for Experienced Users**   If you already have experience with Julia, Pluto.jl and Git, you can
-> * Get all notebook and code files using `git clone https://github.com/IsaiahDal/isaiahdal.github.io/tree/main`, which will provide you with all code files in the expected configuration. Specifically:
+> * Get all notebook and code files using `git clone https://github.com/mxiao0812/MeasuringLiveSite/tree/main`, which will provide you with all code files in the expected configuration. Specifically:
 >   * All Pluto notebook files are located in a subdirectory called "notebooks".
 >   * All data used in the lectures are located in a subdirectory called "DATA".
 > * Open, run, and edit any of the lecture files in Pluto's code editor.
@@ -87,7 +87,7 @@ mkdir -p DATA
 unzip MeasurementData-main.zip -d DATA
 ```
 
-Alternatively, you can download individual files from [this repository](https://github.com/IsaiahDal/isaiahdal.github.io/tree/main/DATA). 
+Alternatively, you can download individual files from [this repository](https://github.com/mxiao0812/MeasuringLiveSite/tree/main/DATA). 
 
 ### 2.2 Code
 
