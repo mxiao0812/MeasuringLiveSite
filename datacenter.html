@@ -181,10 +181,16 @@ Last Updated: 12/20/2025
     </div>
 
     <!-- Chart Canvas-->
-    <canvas id="data-chart"></canvas>
+    <div id="chart-content">
+      <canvas id="data-chart"></canvas>
+      <div id="table-view" style="display:none;"></div>
+    </div>
 
-    <!-- Update Chart -->
-    <button id="update-chart">Update Chart</button>
+    <!-- Chart Update & Toggle View (Chart/Table) Buttons -->
+    <div id="view-button-container">
+      <button id="update-chart">Update Data</button>
+      <button id="toggle-view">Table View</button>
+    </div>
 
   </div>
 
@@ -227,6 +233,8 @@ Last Updated: 12/20/2025
   const downloadFull = document.getElementById("download-full");
   const dataChart = document.getElementById("data-chart");
   const applyBtn = document.getElementById("update-chart");
+  const toggleViewBtn = document.getElementById("toggle-view");
+  const tableView = document.getElementById("table-view");
 
   /* YEAR SELECT */
   const sliderYears = document.getElementById("slider-years");
@@ -694,32 +702,55 @@ Last Updated: 12/20/2025
   function updateChart() {
     if (!currentVariable) return;
 
-    // Get current variable
     const row = rawData.find(r => r.cols[0] === currentVariable);
     if (!row) return;
 
-    // Get selected years
     const allYears = csvHeaders.slice(1).map(Number);
-    const allValues = row.cols.slice(1).map(v => parseFloat(v));
-    
-    // Pushdata from selected years into arrays to plot
-    const filteredYears = [];
-    const filteredValues = [];
+    const allRaw = row.cols.slice(1).map(v => parseFloat(v));
+
+    const rowAdjusted = adjustedData.find(r => r.cols[0] === currentVariable);
+    const allAdj = rowAdjusted ? rowAdjusted.cols.slice(1).map(Number) : allRaw;
+
+    const years = [];
+    const rawVals = [];
+    const adjVals = [];
+
     for (let i = 0; i < allYears.length; i++) {
       const y = allYears[i];
       if (y >= startYear && y <= endYear) {
-        filteredYears.push(y);
-        filteredValues.push(allValues[i]);
+        years.push(y);
+        rawVals.push(allRaw[i]);
+        adjVals.push(allAdj[i]);
       }
     }
-    
-    renderChart(currentVariable, filteredYears, filteredValues); // Update chart
+
+    if (isTableView) {
+      // TABLE VIEW
+      // Hide canvas first
+      dataChart.style.display = "none";
+      tableView.style.display = "block";
+
+      if (chart) { chart.destroy(); chart = null; }
+
+      renderTable(currentVariable, years, rawVals, adjVals);
+
+      tableView.scrollTop = 0;
+
+    } else {
+      // Show chart canvas, hide table
+      tableView.style.display = "none";
+      dataChart.style.display = "block";
+
+      if (chart) { chart.destroy(); chart = null; }
+
+      requestAnimationFrame(() => {
+        renderChart(currentVariable, years, rawVals);
+        if (chart) chart.resize();
+      });
+    }
   }
 
-
-
   function renderChart(label, years, values) {
-
     // Rest chart
     const ctx = dataChart;
     if (chart) chart.destroy();
@@ -769,6 +800,50 @@ Last Updated: 12/20/2025
 
     applyBtn.style.visibility = "hidden";
   });
+
+  /* Toggle View */
+  // Hide chart/table view on click to switch between views
+  toggleViewBtn.addEventListener("click", () => {
+    isTableView = !isTableView;
+    toggleViewBtn.textContent = isTableView ? "Chart View" : "Table View";
+    updateChart();
+  });
+
+/*------------------------------------------------------------------------------------------------------------*/
+
+/* Table View */
+
+let isTableView = false;
+
+function renderTable(label, years, rawValues, adjValues) {
+  let html = `<h3 style="margin: 0; text-align:center;">${label}</h3>`;
+  html += `<table>
+    <thead>
+      <tr>
+        <th>Year</th>
+        <th>Raw</th>
+        <th>Adjusted</th>
+      </tr>
+    </thead>
+    <tbody>
+  `;
+
+  for (let i = 0; i < years.length; i++) {
+    const y = years[i];
+    const r = rawValues[i];
+    const a = adjValues[i];
+
+    html += `<tr>
+      <td>${y}</td>
+      <td>${Number.isFinite(r) ? r.toLocaleString() : ""}</td>
+      <td>${Number.isFinite(a) ? a.toLocaleString() : ""}</td>
+    </tr>`;
+  }
+
+  html += `</tbody></table>`;
+
+  tableView.innerHTML = html;
+}
 
 /*------------------------------------------------------------------------------------------------------------*/
 

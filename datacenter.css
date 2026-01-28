@@ -127,13 +127,44 @@ li.excluded {
 
 /* Chart */
 #chart-container {
-  align-items: center;
   background-color: white;
   border-radius: 2vw;
   box-sizing: border-box;
+
   display: flex;
   flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+
+  height: 100%;
+  min-height: 0;
   width: 60%;
+}
+#chart-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  position: relative;
+  
+  overflow: hidden;
+  box-sizing: border-box;
+}
+#data-chart,
+#table-view {
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+#data-chart {
+  position: relative;
+  z-index: 10;
 }
 
 /* Chart Download */
@@ -141,23 +172,12 @@ li.excluded {
   align-items: center;
   box-sizing: border-box;
   display: flex;
-  height: 15%;
   justify-content: space-between;
   padding: 1vh 1vw 2vh;
   width: 100%;
 }
 
 #download-button-container button { font-size: 0.8rem; }
-
-
-/* Chart Canvas */
-#data-chart {
-  box-sizing: border-box;
-  height: 80%;
-  min-height: 80%;
-  padding: 1%;
-  width: 100%; 
-}
 
 /*************************************************************************************************************/
 
@@ -166,12 +186,9 @@ li.excluded {
 /* Update Chart */
 #update-chart {
   cursor: pointer;
-  bottom: 9vh;
   font-size: 0.8rem;
-  margin: none;
   visibility: hidden;
   width: fit-content;
-  z-index: 999;
 }
 
 /* Slider */
@@ -220,4 +237,55 @@ li.excluded {
   pointer-events: auto !important;
   position: relative;
   z-index: 10;
+}
+
+/*************************************************************************************************************/
+
+/* Toggle View Button */
+#toggle-view {
+  font-size: 0.8rem;
+}
+#view-button-container {
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: space-between;
+  padding: 1vh 1vw 2vh;
+  width: 100%;
+  flex: 0 0 auto;
+}
+
+/* TABLE VIEW */
+#table-view {
+  display: none;
+  z-index: 20;
+  overflow: auto;
+  padding: 0;
+  margin: 0;
+}
+#table-view.active {
+  display: block;
+}
+#data-chart.hidden {
+  display: none;
+}
+#table-view table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  table-layout: fixed;
+}
+#table-view th, #table-view td {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+}
+#table-view h3 {
+  margin: 1rem 0.5rem;
+  text-align: center;
+  padding-top: 0.5rem;
+}
+#download-button-container,
+#view-button-container {
+  flex: 0 0 auto;
 }
