@@ -782,9 +782,22 @@ Last Updated: 12/20/2025
           title: { display: true, text: label, font: { size: 20 } },
           legend: { display: true }
         },
-        scales: { // Display source of data
-          x: { title: {display: true, text: `Source ${curSource}`} }, 
-          y: { ticks: { callback: v => v.toExponential(2) } }
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Year'
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Dollars'
+            },
+            ticks: {
+              callback: v => v.toExponential(2)
+            }
+          }
         }
       }
     });
