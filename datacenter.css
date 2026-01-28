@@ -255,6 +255,11 @@ li.excluded {
   flex: 0 0 auto;
 }
 
+/* Normalize Button */
+#normalize-button {
+  font-size: 0.8rem;
+}
+
 /* TABLE VIEW */
 #table-view {
   display: none;
@@ -284,8 +289,4 @@ li.excluded {
   margin: 1rem 0.5rem;
   text-align: center;
   padding-top: 0.5rem;
-}
-#download-button-container,
-#view-button-container {
-  flex: 0 0 auto;
 }

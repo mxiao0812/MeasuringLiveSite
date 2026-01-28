@@ -188,6 +188,7 @@ Last Updated: 12/20/2025
 
     <!-- Chart Update & Toggle View (Chart/Table) Buttons -->
     <div id="view-button-container">
+      <button id="normalize-button">Normalize</button>
       <button id="update-chart">Update Data</button>
       <button id="toggle-view">Table View</button>
     </div>
@@ -235,6 +236,7 @@ Last Updated: 12/20/2025
   const applyBtn = document.getElementById("update-chart");
   const toggleViewBtn = document.getElementById("toggle-view");
   const tableView = document.getElementById("table-view");
+  const normalizeButton = document.getElementById("normalize-button");
 
   /* YEAR SELECT */
   const sliderYears = document.getElementById("slider-years");
@@ -242,6 +244,8 @@ Last Updated: 12/20/2025
   const leftThumb = document.getElementById("slider-thumb-left");
   const rightThumb = document.getElementById("slider-thumb-right");
 
+  let isTableView = false;
+  let isNormalized = false;
 
 /*********************************************************************************************************************/
 
@@ -706,10 +710,20 @@ Last Updated: 12/20/2025
     if (!row) return;
 
     const allYears = csvHeaders.slice(1).map(Number);
-    const allRaw = row.cols.slice(1).map(v => parseFloat(v));
+    let allRaw = row.cols.slice(1).map(v => parseFloat(v));
 
     const rowAdjusted = adjustedData.find(r => r.cols[0] === currentVariable);
-    const allAdj = rowAdjusted ? rowAdjusted.cols.slice(1).map(Number) : allRaw;
+    let allAdj = rowAdjusted ? rowAdjusted.cols.slice(1).map(Number) : allRaw;
+
+    // Apply normalization if enabled
+    if (isNormalized) {
+      const maxRaw = Math.max(...allRaw.filter(v => !isNaN(v)));
+      const maxAdj = Math.max(...allAdj.filter(v => !isNaN(v)));
+      const maxVal = Math.max(maxRaw, maxAdj, 1); // Avoid division by zero
+      
+      allRaw = allRaw.map(v => (v / maxVal) * 100);
+      allAdj = allAdj.map(v => (v / maxVal) * 100);
+    }
 
     const years = [];
     const rawVals = [];
@@ -792,10 +806,18 @@ Last Updated: 12/20/2025
           y: {
             title: {
               display: true,
-              text: 'Dollars'
+              text: isNormalized ? 'Normalized Value (0-100)' : 'Raw Value (in dollars)'
             },
             ticks: {
-              callback: v => v.toExponential(2)
+              callback: function(v) {
+                if (isNormalized) {
+                  // For normalized values (0-100), show regular numbers
+                  return Math.round(v);
+                } else {
+                  // For raw values, use scientific notation
+                  return v.toExponential(2);
+                }
+              }
             }
           }
         }
@@ -822,20 +844,28 @@ Last Updated: 12/20/2025
     updateChart();
   });
 
+  /* Normalize Data */
+  normalizeButton.addEventListener("click", () => {
+    isNormalized = !isNormalized;
+    normalizeButton.textContent = isNormalized ? "Raw Data" : "Normalize";
+    updateChart();
+  });
+
 /*------------------------------------------------------------------------------------------------------------*/
 
 /* Table View */
 
-let isTableView = false;
-
 function renderTable(label, years, rawValues, adjValues) {
   let html = `<h3 style="margin: 0; text-align:center;">${label}</h3>`;
+  if (isNormalized) {
+    html += `<p style="text-align:center; margin:0.5rem 0; color:#666; font-size:0.9rem;">Values normalized to 0-100 scale</p>`;
+  }
   html += `<table>
     <thead>
       <tr>
         <th>Year</th>
-        <th>Raw</th>
-        <th>Adjusted</th>
+        <th>${isNormalized ? 'Normalized Raw' : 'Raw'}</th>
+        <th>${isNormalized ? 'Normalized Adjusted' : 'Adjusted'}</th>
       </tr>
     </thead>
     <tbody>
@@ -848,8 +878,8 @@ function renderTable(label, years, rawValues, adjValues) {
 
     html += `<tr>
       <td>${y}</td>
-      <td>${Number.isFinite(r) ? r.toLocaleString() : ""}</td>
-      <td>${Number.isFinite(a) ? a.toLocaleString() : ""}</td>
+      <td>${Number.isFinite(r) ? (isNormalized ? r.toFixed(2) : r.toLocaleString()) : ""}</td>
+      <td>${Number.isFinite(a) ? (isNormalized ? a.toFixed(2) : a.toLocaleString()) : ""}</td>
     </tr>`;
   }
 
