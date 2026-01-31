@@ -175,15 +175,23 @@ Last Updated: 12/20/2025
 
     <!-- Chart Download -->
     <div id="download-button-container">
-      <button id="download-chart"> Download Chart </button>
+      <button id="download-asset-chart"> Download Assets Chart </button>
+      <button id="download-liability-chart"> Download Liabilities Chart </button>
       <button id="download-series"> Download Selected Series </button>
       <button id="download-full"> Download Full Dataset </button>
     </div>
 
     <!-- Chart Canvas-->
     <div id="chart-content">
-      <canvas id="data-chart"></canvas>
-      <div id="table-view" style="display:none;"></div>
+      <div id="data-chart-left">
+        <canvas id="assets-chart"></canvas>
+      </div>
+      <div id="data-chart-right">
+        <canvas id="liabilities-chart"></canvas>
+      </div>
+      
+      <div id="table-view-left" style="display:none;"></div>
+      <div id="table-view-right" style="display:none;"></div>
     </div>
 
     <!-- Chart Update & Toggle View (Chart/Table) Buttons -->
@@ -224,28 +232,36 @@ Last Updated: 12/20/2025
   /* MAIN CONTENTS */
   const main = document.querySelector('main');
 
-  /* Tables */
+    /* Tables */
   const leftTable = document.getElementById('table-left');
   const rightTable = document.getElementById('table-right');
-  
+
   /* Chart */
-  const downloadChart = document.getElementById("download-chart");
+  const downloadAssetChart = document.getElementById("download-asset-chart");
+  const downloadLiabilityChart = document.getElementById("download-liability-chart");
   const downloadSeries = document.getElementById("download-series");
   const downloadFull = document.getElementById("download-full");
-  const dataChart = document.getElementById("data-chart");
+  const assetsChart = document.getElementById("assets-chart");
+  const liabilitiesChart = document.getElementById("liabilities-chart");
   const applyBtn = document.getElementById("update-chart");
   const toggleViewBtn = document.getElementById("toggle-view");
-  const tableView = document.getElementById("table-view");
+  const tableViewLeft = document.getElementById("table-view-left");
+  const tableViewRight = document.getElementById("table-view-right");
   const normalizeButton = document.getElementById("normalize-button");
+
+  let isTableView = false;
+  let isNormalized = false;
+
+  /* Chart */
+  let assetsChartInstance, liabilitiesChartInstance;
+  let currentAssetVariable = null;
+  let currentLiabilityVariable = null;
 
   /* YEAR SELECT */
   const sliderYears = document.getElementById("slider-years");
   const track = document.getElementById("slider-track");
   const leftThumb = document.getElementById("slider-thumb-left");
   const rightThumb = document.getElementById("slider-thumb-right");
-
-  let isTableView = false;
-  let isNormalized = false;
 
 /*********************************************************************************************************************/
 
@@ -433,7 +449,16 @@ Last Updated: 12/20/2025
         const h1 = document.createElement("h1");
         h1.textContent = value;
         sectionContainer.appendChild(h1);
-        h1.addEventListener("click", () => plotVariable(value));
+        const headerTable = sectionContainer; 
+
+        h1.addEventListener("click", () => {
+          if (headerTable === leftTable) {
+            currentAssetVariable = value;
+          } else {
+            currentLiabilityVariable = value;
+          }
+          updateChart();
+        });
 
         stack.length = 0; // Reset stack
 
@@ -472,7 +497,6 @@ Last Updated: 12/20/2025
           li.appendChild(newUl);
           stack.push({var: newUl, indent: (indent + 1)});
         }
-
       }
 
       if (value === endRow) endRowFound = true; // Check if designated last row found
@@ -489,9 +513,14 @@ Last Updated: 12/20/2025
 
     curSource = source; // Update chart source
 
-    // Plot first variable
+    // Plot initial variables for both charts
     const firstRow = rawData.find(r => r.cols[0].trim() === startRow);
-    if (firstRow) plotVariable(firstRow.cols[0]);
+    if (firstRow) {
+      currentAssetVariable = headers[0];  // Total assets
+      currentLiabilityVariable = headers[1];  // Total liabilities
+      
+      updateChart();  // Update both charts
+    }
 
     toggleSelection(); // Toggle dataset selection menu
 
@@ -555,7 +584,18 @@ Last Updated: 12/20/2025
       // Plot variable on click
       label.addEventListener("click", e => {
         e.stopPropagation();
-        plotVariable(li.dataset.plotValue);
+        
+        const clickedLi = e.currentTarget.closest('li');
+        if (!clickedLi) return;
+        
+        const isAsset = leftTable.contains(clickedLi);
+        
+        if (isAsset) {
+          currentAssetVariable = clickedLi.dataset.plotValue;
+        } else {
+          currentLiabilityVariable = clickedLi.dataset.plotValue;
+        }
+        updateChart();
       });
 
       return li;
@@ -610,7 +650,9 @@ Last Updated: 12/20/2025
 
     });
 
-    if (currentVariable) plotVariable(currentVariable); // Update chart accordingly
+    if (currentAssetVariable || currentLiabilityVariable) {
+      updateChart();
+    }
   }
 
 
@@ -618,48 +660,57 @@ Last Updated: 12/20/2025
 
   let chart;
 
-  /* Chart Download */
+  /* Chart Download for Assets */
+  downloadAssetChart.addEventListener("click", () => {
+    if (!assetsChartInstance) return;
 
-  downloadChart.addEventListener("click", () => {
-    if (!chart) return;
-
-    // Create png of current chart and download
     const link = document.createElement("a");
-    link.download = `${currentVariable}.png`;
-    link.href = chart.toBase64Image();
+    link.download = `${currentAssetVariable || "assets"}.png`;
+    link.href = assetsChartInstance.toBase64Image();  // FIXED: use assetsChartInstance
+    link.click();
+  });
+
+  /* Chart Download for Liabilities */
+  downloadLiabilityChart.addEventListener("click", () => {
+    if (!liabilitiesChartInstance) return;
+
+    const link = document.createElement("a");
+    link.download = `${currentLiabilityVariable || "liabilities"}.png`;
+    link.href = liabilitiesChartInstance.toBase64Image();  // FIXED: use liabilitiesChartInstance
     link.click();
   });
 
   // Download raw and adjusted values for selected series
   downloadSeries.addEventListener("click", () => {
-    if (!currentVariable) return;
-
-    const rowRaw = rawData.find(r => r.cols[0] === currentVariable);
-    if (!rowRaw) return;
-
-    const rowAdjusted = adjustedData.find(r => r.cols[0] === currentVariable);
-
+    let output = "Year,Asset Raw,Asset Adjusted,Liability Raw,Liability Adjusted\n";
+    
     const years = csvHeaders.slice(1).map(Number);
-    const rawVals = rowRaw.cols.slice(1).map(v => parseFloat(v));
-    const adjVals = rowAdjusted
-      ? rowAdjusted.cols.slice(1).map(v => parseFloat(v))
-      : rawVals;
-
-    let output = "Year,Raw,Adjusted\n";
-
+    
+    const assetRow = rawData.find(r => r.cols[0] === currentAssetVariable);
+    const liabilityRow = rawData.find(r => r.cols[0] === currentLiabilityVariable);
+    
+    if (!assetRow && !liabilityRow) return;
+  
+    const assetRawVals = assetRow ? assetRow.cols.slice(1).map(v => parseFloat(v)) : [];
+    const assetAdjRow = adjustedData.find(r => r.cols[0] === currentAssetVariable);
+    const assetAdjVals = assetAdjRow ? assetAdjRow.cols.slice(1).map(v => parseFloat(v)) : assetRawVals;
+    
+    const liabilityRawVals = liabilityRow ? liabilityRow.cols.slice(1).map(v => parseFloat(v)) : [];
+    const liabilityAdjRow = adjustedData.find(r => r.cols[0] === currentLiabilityVariable);
+    const liabilityAdjVals = liabilityAdjRow ? liabilityAdjRow.cols.slice(1).map(v => parseFloat(v)) : liabilityRawVals;
+    
     for (let i = 0; i < years.length; i++) {
       if (years[i] >= startYear && years[i] <= endYear) {
-        output += `${years[i]},${rawVals[i]},${adjVals[i]}\n`;
+        output += `${years[i]},${assetRawVals[i] || ''},${assetAdjVals[i] || ''},${liabilityRawVals[i] || ''},${liabilityAdjVals[i] || ''}\n`;
       }
     }
-
+    
     const blob = new Blob([output], { type: "text/csv" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `${currentVariable}_${startYear}-${endYear}_raw_adjusted.csv`;
+    link.download = `${currentAssetVariable}_${currentLiabilityVariable}_${startYear}-${endYear}.csv`;
     link.click();
   });
-
 
   // Download the full selected dataset
   downloadFull.addEventListener("click", () => {
@@ -690,29 +741,26 @@ Last Updated: 12/20/2025
 
   let currentVariable = null;
 
-  /**
-   *  Plots the input variable.
-   *  
-   *  @param {String} label - the variable to be plotted
-   */ 
-  function plotVariable(label) {
-    currentVariable = label;
-    updateChart();
+  function updateChart() {
+    if (currentAssetVariable) {
+      updateSingleChart('assets', currentAssetVariable, assetsChart, tableViewLeft);
+    }
+    if (currentLiabilityVariable) {
+      updateSingleChart('liabilities', currentLiabilityVariable, liabilitiesChart, tableViewRight);
+    }
   }
 
   /**
    *  Updates chart variable and year range.
    */ 
-  function updateChart() {
-    if (!currentVariable) return;
-
-    const row = rawData.find(r => r.cols[0] === currentVariable);
+  function updateSingleChart(type, label, canvasElement, tableElement) {
+    const row = rawData.find(r => r.cols[0] === label);
     if (!row) return;
 
     const allYears = csvHeaders.slice(1).map(Number);
     let allRaw = row.cols.slice(1).map(v => parseFloat(v));
 
-    const rowAdjusted = adjustedData.find(r => r.cols[0] === currentVariable);
+    const rowAdjusted = adjustedData.find(r => r.cols[0] === label);
     let allAdj = rowAdjusted ? rowAdjusted.cols.slice(1).map(Number) : allRaw;
 
     // Apply normalization if enabled
@@ -740,69 +788,67 @@ Last Updated: 12/20/2025
 
     if (isTableView) {
       // TABLE VIEW
-      // Hide canvas first
-      dataChart.style.display = "none";
-      tableView.style.display = "block";
-
-      if (chart) { chart.destroy(); chart = null; }
-
-      renderTable(currentVariable, years, rawVals, adjVals);
-
-      tableView.scrollTop = 0;
-
+      canvasElement.parentElement.style.display = "none";
+      tableElement.style.display = "block";
+      
+      if (type === 'assets' && assetsChartInstance) { 
+        assetsChartInstance.destroy(); 
+        assetsChartInstance = null; 
+      }
+      if (type === 'liabilities' && liabilitiesChartInstance) { 
+        liabilitiesChartInstance.destroy(); 
+        liabilitiesChartInstance = null; 
+      }
+      
+      renderTable(label, years, rawVals, adjVals, tableElement);
+      
     } else {
-      // Show chart canvas, hide table
-      tableView.style.display = "none";
-      dataChart.style.display = "block";
-
-      if (chart) { chart.destroy(); chart = null; }
-
+      // CHART VIEW
+      tableElement.style.display = "none";
+      canvasElement.parentElement.style.display = "block";
+      
+      if (type === 'assets' && assetsChartInstance) { 
+        assetsChartInstance.destroy(); 
+        assetsChartInstance = null; 
+      }
+      if (type === 'liabilities' && liabilitiesChartInstance) { 
+        liabilitiesChartInstance.destroy(); 
+        liabilitiesChartInstance = null; 
+      }
+      
       requestAnimationFrame(() => {
-        renderChart(currentVariable, years, rawVals);
-        if (chart) chart.resize();
+        renderChart(label, years, rawVals, adjVals, canvasElement, type);
       });
     }
   }
 
-  function renderChart(label, years, values) {
-    // Rest chart
-    const ctx = dataChart;
-    if (chart) chart.destroy();
-
-    // Get adjusted values for variable
-    const rowAdjusted = adjustedData.find(r => r.cols[0] === label);
-    const adjustedValues = rowAdjusted ? rowAdjusted.cols.slice(1).map(Number) : values;
-
+  function renderChart(label, years, rawValues, adjValues, canvasElement, type) {
+    const ctx = canvasElement;
+    
     // Construct chart
-    chart = new Chart(ctx, {
+    const chart = new Chart(ctx, {
       type: "line",
       data: {
-        labels: years, // Years on x-axis
+        labels: years,
         datasets: [
-          { label: `Raw`, data: values, borderColor: "blue", borderWidth: 2 },
-          { label: `Adjusted`, data: adjustedValues, borderColor: "red", borderWidth: 2, borderDash: [5,5] }
+          { label: `Raw`, data: rawValues, borderColor: "blue", borderWidth: 2 },
+          { label: `Adjusted`, data: adjValues, borderColor: "red", borderWidth: 2, borderDash: [5,5] }
         ]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-
-        interaction: { // Show tooltips
-          mode: "index",
-          intersect: false
-        },
-
-        plugins: {  // Variable name as title
-          title: { display: true, text: label, font: { size: 20 } },
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          title: { 
+            display: true, 
+            text: `${type === 'assets' ? 'Assets: ' : 'Liabilities: '}${label}`, 
+            font: { size: 16 } 
+          },
           legend: { display: true }
         },
         scales: {
-          x: {
-            title: {
-              display: true,
-              text: 'Year'
-            }
-          },
+          x: { title: { display: true, text: 'Year' } },
           y: {
             title: {
               display: true,
@@ -811,10 +857,8 @@ Last Updated: 12/20/2025
             ticks: {
               callback: function(v) {
                 if (isNormalized) {
-                  // For normalized values (0-100), show regular numbers
                   return Math.round(v);
                 } else {
-                  // For raw values, use scientific notation
                   return v.toExponential(2);
                 }
               }
@@ -823,6 +867,19 @@ Last Updated: 12/20/2025
         }
       }
     });
+    
+    // Store chart instance
+    if (type === 'assets') {
+      assetsChartInstance = chart;
+    } else {
+      liabilitiesChartInstance = chart;
+    }
+
+    // Force initial resize
+    setTimeout(() => {
+      chart.resize();
+      chart.update('none');
+    }, 100);
   }
 
   /* Update Chart */
@@ -832,7 +889,6 @@ Last Updated: 12/20/2025
     appliedEnd   = endYear;
 
     updateChart();
-
     applyBtn.style.visibility = "hidden";
   });
 
@@ -855,7 +911,7 @@ Last Updated: 12/20/2025
 
 /* Table View */
 
-function renderTable(label, years, rawValues, adjValues) {
+function renderTable(label, years, rawValues, adjValues, tableElement) {
   let html = `<h3 style="margin: 0; text-align:center;">${label}</h3>`;
   if (isNormalized) {
     html += `<p style="text-align:center; margin:0.5rem 0; color:#666; font-size:0.9rem;">Values normalized to 0-100 scale</p>`;
@@ -885,7 +941,7 @@ function renderTable(label, years, rawValues, adjValues) {
 
   html += `</tbody></table>`;
 
-  tableView.innerHTML = html;
+  tableElement.innerHTML = html;
 }
 
 /*------------------------------------------------------------------------------------------------------------*/
@@ -1017,6 +1073,22 @@ function renderTable(label, years, rawValues, adjValues) {
     headers = ["Total assets", "Total liabilities"],
     '𝘚𝘵𝘢𝘵𝘪𝘴𝘵𝘪𝘤𝘴 𝘰𝘧 𝘐𝘯𝘤𝘰𝘮𝘦. Internal Revenue Sevice. Washington, D.C.'
   );
+
+  // Force charts to resize when window changes
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      if (assetsChartInstance) {
+        assetsChartInstance.resize();
+        assetsChartInstance.update('none'); 
+      }
+      if (liabilitiesChartInstance) {
+        liabilitiesChartInstance.resize();
+        liabilitiesChartInstance.update('none'); 
+      }
+    }, 150); 
+  });
 
 </script>
 </body>

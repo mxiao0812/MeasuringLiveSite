@@ -144,28 +144,92 @@ li.excluded {
   flex: 1 1 auto;
   min-height: 0;
   width: 100%;
-  height: 100%;
   
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr;
   position: relative;
   
   overflow: hidden;
   box-sizing: border-box;
+  padding: 0.5vw;
+
+  min-height: 300px;
+  height: 50vh; 
+  max-height: 70vh; 
 }
-#data-chart,
-#table-view {
-  grid-column: 1;
-  grid-row: 1;
+#data-chart-left,
+#data-chart-right,
+#table-view-left,
+#table-view-right {
   width: 100%;
   height: 100%;
   box-sizing: border-box;
+
+  min-height: 250px;
+  position: relative;
 }
-#data-chart {
+
+#data-chart-left,
+#table-view-left {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+#data-chart-right,
+#table-view-right {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+#data-chart-left,
+#data-chart-right {
   position: relative;
   z-index: 10;
 }
+
+#table-view-left,
+#table-view-right {
+  display: none;
+  z-index: 20;
+  overflow: auto;
+  padding: 0;
+  margin: 0;
+}
+
+#table-view-left.active,
+#table-view-right.active {
+  display: block;
+}
+
+#data-chart-left.hidden,
+#data-chart-right.hidden {
+  display: none;
+}
+
+#data-chart-left canvas,
+#data-chart-right canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+#dual-chart {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 1vh;
+}
+#asset-chart,
+#liability-chart {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 250px;
+}
+
 
 /* Chart Download */
 #download-button-container {
