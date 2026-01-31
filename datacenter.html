@@ -1054,9 +1054,14 @@ function renderTable(label, years, rawValues, adjValues, tableElement) {
    *  Resets the slider.
    */ 
   function resetSlider() {
+    const thumbWidth = leftThumb.getBoundingClientRect().width;
+    if (!thumbWidth) {
+      requestAnimationFrame(resetSlider);
+      return;
+    }
+
     const trackMin = window.innerWidth * 0.04;
     const trackMax = window.innerWidth * 0.94;
-    const thumbWidth = leftThumb.getBoundingClientRect().width;
 
     leftThumb.style.left = `${trackMin - thumbWidth / 2}px`;
     rightThumb.style.left = `${trackMax - thumbWidth / 2}px`;
@@ -1066,13 +1071,16 @@ function renderTable(label, years, rawValues, adjValues, tableElement) {
   }
 
   // Build first table 
-  buildTables(
-    "allcorp",
-    "Total assets", 
-    "Less:  Cost of treasury stock",
-    headers = ["Total assets", "Total liabilities"],
-    '𝘚𝘵𝘢𝘵𝘪𝘴𝘵𝘪𝘤𝘴 𝘰𝘧 𝘐𝘯𝘤𝘰𝘮𝘦. Internal Revenue Sevice. Washington, D.C.'
-  );
+  window.addEventListener("resize", resetSlider);
+  window.addEventListener("load", () => {
+    buildTables(
+      "allcorp",
+      "Total assets",
+      "Less:  Cost of treasury stock",
+      headers = ["Total assets", "Total liabilities"],
+      "𝘚𝘵𝘢𝘵𝘪𝘴𝘵𝘪𝘤𝘴 𝘰𝘧 𝘐𝘯𝘤𝘰𝘮𝘦. Internal Revenue Sevice. Washington, D.C."
+    );
+  });
 
   // Force charts to resize when window changes
   let resizeTimeout;
