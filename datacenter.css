@@ -68,6 +68,11 @@ main.blurred { filter: blur(1px); }
 .table li span {
   font-size: 0.8rem;
 }
+.table li > ul {
+  margin-left: 1.2rem;
+  padding-left: 0.8rem;
+  border-left: 1px solid rgba(0, 0, 0, 0.15);
+}
 
 li.excluded {
   text-decoration: line-through;
