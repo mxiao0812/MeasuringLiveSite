@@ -553,11 +553,14 @@ Last Updated: 12/20/2025
       }
 
       // Button to exclude nested variables on click
-      const excludeBtn = document.createElement("span");
-      excludeBtn.textContent = "✔ ";
-      excludeBtn.classList.add("checkmark");
+      let excludeBtn = null;
 
-      li.appendChild(excludeBtn);
+      if (!hasChildren) {
+        excludeBtn = document.createElement("span");
+        excludeBtn.textContent = "✔ ";
+        excludeBtn.classList.add("checkmark");
+        li.appendChild(excludeBtn);
+      }
 
       // Text for list element
       const label = document.createElement("span");
@@ -568,10 +571,14 @@ Last Updated: 12/20/2025
       function syncCheckmark() {
         const isExcluded = excludedSeries.has(text);
 
-        excludeBtn.textContent = isExcluded ? "✖" : "✔";
-        excludeBtn.classList.toggle("excluded", isExcluded);
-        label.classList.toggle("excluded", isExcluded);
-        li.classList.toggle("excluded", isExcluded);
+        if (!hasChildren) {
+          if (excludeBtn) {
+            excludeBtn.textContent = isExcluded ? "✖" : "✔";
+            excludeBtn.classList.toggle("excluded", isExcluded);
+          }
+          label.classList.toggle("excluded", isExcluded);
+          li.classList.toggle("excluded", isExcluded);
+        }
       }
 
       function handleToggle(e) {
@@ -582,8 +589,10 @@ Last Updated: 12/20/2025
         updateChart();
       }
 
-      label.addEventListener("click", handleToggle);
-      excludeBtn.addEventListener("click", handleToggle);
+      if (!hasChildren) {
+        label.addEventListener("click", handleToggle);
+        if (excludeBtn) excludeBtn.addEventListener("click", handleToggle);
+      }
 
       syncCheckmark();
 
