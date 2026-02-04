@@ -196,9 +196,10 @@ Last Updated: 12/20/2025
 
     <!-- Chart Update & Toggle View (Chart/Table) Buttons -->
     <div id="view-button-container">
-      <button id="normalize-button">Normalize</button>
+      <button id="chart-view">Chart View</button>
+      <button id="table-view-btn">Annual Table View</button>
+      <button id="normalize-button">Normalize Data</button>
       <button id="update-chart">Update Data</button>
-      <button id="toggle-view">Table View</button>
     </div>
 
   </div>
@@ -244,7 +245,6 @@ Last Updated: 12/20/2025
   const assetsChart = document.getElementById("assets-chart");
   const liabilitiesChart = document.getElementById("liabilities-chart");
   const applyBtn = document.getElementById("update-chart");
-  const toggleViewBtn = document.getElementById("toggle-view");
   const tableViewLeft = document.getElementById("table-view-left");
   const tableViewRight = document.getElementById("table-view-right");
   const normalizeButton = document.getElementById("normalize-button");
@@ -937,11 +937,16 @@ Last Updated: 12/20/2025
     applyBtn.style.visibility = "hidden";
   });
 
-  /* Toggle View */
-  // Hide chart/table view on click to switch between views
-  toggleViewBtn.addEventListener("click", () => {
-    isTableView = !isTableView;
-    toggleViewBtn.textContent = isTableView ? "Chart View" : "Table View";
+  const chartViewBtn = document.getElementById("chart-view");
+  const tableViewBtn = document.getElementById("table-view-btn");
+
+  chartViewBtn.addEventListener("click", () => {
+    isTableView = false;
+    updateChart();
+  });
+
+  tableViewBtn.addEventListener("click", () => {
+    isTableView = true;
     updateChart();
   });
 
