@@ -901,7 +901,7 @@ Last Updated: 12/20/2025
 /* Table View */
 
 function renderTable(label, years, rawValues, adjValues, tableElement) {
-  let html = `<h3 style="margin: 0; text-align:center;">${label}</h3>`;
+  let html = `<h3 style="margin: 0; text-align:center;">${tableElement === tableViewLeft ? "Assets" : "Liabilities"}</h3>`;
   if (isNormalized) {
     html += `<p style="text-align:center; margin:0.5rem 0; color:#666; font-size:0.9rem;">Values normalized to 0-100 scale</p>`;
   }
