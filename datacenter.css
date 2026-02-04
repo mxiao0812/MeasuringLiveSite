@@ -255,7 +255,6 @@ li.excluded > span:not(.checkmark):not(:first-child) {
 /* Chart Download */
 #download-button-container {
   align-items: center;
-  gap: 0.6rem;
   box-sizing: border-box;
   display: flex;
   justify-content: space-between;
@@ -263,7 +262,9 @@ li.excluded > span:not(.checkmark):not(:first-child) {
   width: 100%;
 }
 
-#download-button-container button { font-size: 0.8rem; }
+#download-button-container button { 
+  font-size: 0.6rem; 
+}
 
 /*************************************************************************************************************/
 
@@ -277,7 +278,7 @@ li.excluded > span:not(.checkmark):not(:first-child) {
   padding: 0.8rem 0 0.2rem;
 }
 .side-button-bar button {
-  font-size: 0.8rem;
+  font-size: 0.6rem;
   width: 48%;
 }
 
@@ -345,7 +346,7 @@ li.excluded > span:not(.checkmark):not(:first-child) {
 
 /* Toggle View Button */
 #toggle-view {
-  font-size: 0.8rem;
+  font-size: 0.6rem;
 }
 #view-button-container {
   align-items: center;
@@ -360,7 +361,7 @@ li.excluded > span:not(.checkmark):not(:first-child) {
 
 /* Normalize Button */
 #normalize-button {
-  font-size: 0.8rem;
+  font-size: 0.6rem;
 }
 
 /* TABLE VIEW */
@@ -380,7 +381,7 @@ li.excluded > span:not(.checkmark):not(:first-child) {
 #table-view table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.85rem;
+  font-size: 0.2rem;
   table-layout: fixed;
 }
 #table-view th, #table-view td {
@@ -394,6 +395,6 @@ li.excluded > span:not(.checkmark):not(:first-child) {
   padding-top: 0.5rem;
 }
 #view-button-container button {
-  font-size: 0.8rem;
+  font-size: 0.6rem;
   width: 48%;
 }
