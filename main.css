@@ -301,7 +301,7 @@ header h1 a::after { background: white; }
 header h1 a:hover::after, .selection-entry p:hover::after { transform: scaleX(1); }
 
 /* Button Press Animation */
-#download-button-container button, #data-download, .nav-btn, #update-chart, #toggle-view, #normalize-button {
+#download-button-container button, #data-download, .nav-btn, #update-chart, #toggle-view, #normalize-button, .pressable {
   background: linear-gradient(
     145deg,
     rgb(70,130,145),
@@ -324,7 +324,7 @@ header h1 a:hover::after, .selection-entry p:hover::after { transform: scaleX(1)
     box-shadow 0.15s ease;
 }
 
-#download-button-container button:hover, #data-download:hover, .nav-btn:hover, #update-chart:hover, #toggle-view:hover, #normalize-button:hover {
+#download-button-container button:hover, #data-download:hover, .nav-btn:hover, #update-chart:hover, #toggle-view:hover, #normalize-button:hover, .pressable:hover {
   cursor: pointer;
   transform: translateY(-2px);
   box-shadow:
@@ -332,7 +332,7 @@ header h1 a:hover::after, .selection-entry p:hover::after { transform: scaleX(1)
     0 14px 22px rgba(0,0,0,0.4);
 }
 
-#download-button-container button:active, #data-download:active, .nav-btn:active, #update-chart:active, #toggle-view:active, #normalize-button:active {
+#download-button-container button:active, #data-download:active, .nav-btn:active, #update-chart:active, #toggle-view:active, #normalize-button:active, .pressable:active {
   transform: translateY(4px);
   box-shadow:
     0 2px 0 rgb(18,40,48),

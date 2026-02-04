@@ -30,6 +30,9 @@ main.blurred { filter: blur(1px); }
 .content-container { height: 100%; }
 
 .table {
+  display: flex;
+  flex-direction: column;
+
   background-color: white;
   border-radius: 2vw;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
@@ -88,7 +91,7 @@ main.blurred { filter: blur(1px); }
   color: #c62828;
 }
 
-li.excluded > span:last-child {
+li.excluded > span:not(.checkmark):not(:first-child) {
   text-decoration: line-through;
   opacity: 0.6;
 }
@@ -249,7 +252,6 @@ li.excluded > span:last-child {
   min-height: 250px;
 }
 
-
 /* Chart Download */
 #download-button-container {
   align-items: center;
@@ -261,6 +263,22 @@ li.excluded > span:last-child {
 }
 
 #download-button-container button { font-size: 0.8rem; }
+
+/*************************************************************************************************************/
+
+.side-button-bar {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  display: flex;
+  gap: 0.6rem;
+  justify-content: space-between;
+  padding: 0.8rem 0 0.2rem;
+}
+.side-button-bar button {
+  font-size: 0.8rem;
+  width: 48%;
+}
 
 /*************************************************************************************************************/
 

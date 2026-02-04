@@ -398,6 +398,66 @@ Last Updated: 12/20/2025
     return { rawData, csvHeaders };
   }
 
+  function recomputeAdjustedData() {
+    adjustedData = [];
+    const stack = [];
+
+    rawData.forEach(row => {
+      const newRow = { cols: [...row.cols], indent: row.indent };
+
+      while (stack.length && stack[stack.length - 1].indent >= row.indent) {
+        stack.pop();
+      }
+
+      const add = row.cols[0].startsWith("Less:");
+
+      if (excludedSeries.has(row.cols[0])) {
+        stack.forEach(ancestor => {
+          for (let i = 1; i < ancestor.cols.length; i++) {
+            let val = parseFloat(row.cols[i]);
+            val = isNaN(val) ? 0 : val;
+            ancestor.cols[i] += add ? val : -val;
+          }
+        });
+      }
+
+      stack.push(newRow);
+      adjustedData.push(newRow);
+    });
+  }
+
+  function refreshTableUI(tableEl) {
+    const lis = tableEl.querySelectorAll("li");
+    lis.forEach(li => {
+      const key = li.dataset.plotValue;
+      if (!key) return;
+
+      const check = li.querySelector(".checkmark");
+      if (!check) return; // only leaf nodes have checkmarks in your setup
+
+      const isExcluded = excludedSeries.has(key);
+      check.textContent = isExcluded ? "✖" : "✔";
+      check.classList.toggle("excluded", isExcluded);
+      li.classList.toggle("excluded", isExcluded);
+    });
+  }
+
+  function setAllForSide(tableEl, makeExcluded) {
+    const leafLis = tableEl.querySelectorAll("li");
+    leafLis.forEach(li => {
+      const key = li.dataset.plotValue;
+      const check = li.querySelector(".checkmark");
+      if (!key || !check) return;
+
+      if (makeExcluded) excludedSeries.add(key);
+      else excludedSeries.delete(key);
+    });
+
+    recomputeAdjustedData();
+    refreshTableUI(tableEl);
+    updateChart();
+  }
+
   /**
    *  Builds two tables from CSV data that plot a selected variable when clicked. Dynamically creates
    *    hierarchical structure of table based on the level of indentation used in the CSV.
@@ -492,6 +552,36 @@ Last Updated: 12/20/2025
       if (value === endRow) endRowFound = true; // Check if designated last row found
     });
 
+    // Insert buttons at bottom of the sidebars
+    function addSideButtons(tableEl, sideName) {
+      const old = tableEl.querySelector(".side-button-bar");
+      if (old) old.remove();
+
+      const bar = document.createElement("div");
+      bar.className = "side-button-bar";
+
+      const deselectBtn = document.createElement("button");
+      deselectBtn.className = "pressable";
+      deselectBtn.textContent = "Deselect All";
+      deselectBtn.addEventListener("click", () => {
+        setAllForSide(tableEl, true);
+      });
+
+      const selectBtn = document.createElement("button");
+      selectBtn.className = "pressable";
+      selectBtn.textContent = "Select All";
+      selectBtn.addEventListener("click", () => {
+        setAllForSide(tableEl, false);
+      });
+
+      bar.appendChild(deselectBtn);
+      bar.appendChild(selectBtn);
+      tableEl.appendChild(bar);
+    }
+
+    addSideButtons(leftTable, "assets");
+    addSideButtons(rightTable, "liabilities");
+
     // Additional state updates
 
     // Reset slider
@@ -553,14 +643,10 @@ Last Updated: 12/20/2025
       }
 
       // Button to exclude nested variables on click
-      let excludeBtn = null;
-
-      if (!hasChildren) {
-        excludeBtn = document.createElement("span");
-        excludeBtn.textContent = "✔ ";
-        excludeBtn.classList.add("checkmark");
-        li.appendChild(excludeBtn);
-      }
+      const excludeBtn = document.createElement("span");
+      excludeBtn.textContent = "✔ ";
+      excludeBtn.classList.add("checkmark");
+      li.appendChild(excludeBtn);
 
       // Text for list element
       const label = document.createElement("span");
@@ -571,14 +657,10 @@ Last Updated: 12/20/2025
       function syncCheckmark() {
         const isExcluded = excludedSeries.has(text);
 
-        if (!hasChildren) {
-          if (excludeBtn) {
-            excludeBtn.textContent = isExcluded ? "✖" : "✔";
-            excludeBtn.classList.toggle("excluded", isExcluded);
-          }
-          label.classList.toggle("excluded", isExcluded);
-          li.classList.toggle("excluded", isExcluded);
-        }
+        excludeBtn.textContent = isExcluded ? "✖" : "✔";
+        excludeBtn.classList.toggle("excluded", isExcluded);
+        label.classList.toggle("excluded", isExcluded);
+        li.classList.toggle("excluded", isExcluded);
       }
 
       function handleToggle(e) {
@@ -589,10 +671,8 @@ Last Updated: 12/20/2025
         updateChart();
       }
 
-      if (!hasChildren) {
-        label.addEventListener("click", handleToggle);
-        if (excludeBtn) excludeBtn.addEventListener("click", handleToggle);
-      }
+      label.addEventListener("click", handleToggle);
+      excludeBtn.addEventListener("click", handleToggle);
 
       syncCheckmark();
 
@@ -616,41 +696,8 @@ Last Updated: 12/20/2025
       excludedSeries.add(variable);
     }
 
-    // Reset adjusted data seriees
-    adjustedData = [];
-    const stack = [];
-
-    // Reconstruct adjusted data series
-    rawData.forEach(row => {
-      const newRow = { cols: [...row.cols], indent: row.indent };
-
-      // Pop ancestors that are no longer parents
-      while (stack.length && stack[stack.length - 1].indent >= row.indent) {
-        stack.pop();
-      }
-
-      const add = row.cols[0].startsWith("Less:");    // Whether to add variable (if normally subtracted)
-
-      // Subtract value from all ancestors in stack
-      if (excludedSeries.has(row.cols[0])) {
-        stack.forEach(ancestor => {
-          for (let i = 1; i < ancestor.cols.length; i++) {
-            let val = parseFloat(row.cols[i]);
-            val = isNaN(val) ? 0 : val;               // Set val to 0 if NaN
-            ancestor.cols[i] += add ? val : -val;   
-          }
-        });
-      }
-
-      // Push current row to stack as potential ancestor
-      stack.push(newRow);
-      adjustedData.push(newRow);
-
-    });
-
-    if (currentAssetVariable || currentLiabilityVariable) {
-      updateChart();
-    }
+    recomputeAdjustedData();
+    if (currentAssetVariable || currentLiabilityVariable) updateChart();
   }
 
 
