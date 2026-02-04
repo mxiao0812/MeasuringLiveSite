@@ -301,7 +301,7 @@ header h1 a::after { background: white; }
 header h1 a:hover::after, .selection-entry p:hover::after { transform: scaleX(1); }
 
 /* Button Press Animation */
-#download-button-container button, #data-download, .nav-btn, #update-chart, #toggle-view, #normalize-button, #chart-view, #table-view-btn, .pressable {
+#download-button-container button, #data-download, .nav-btn, #update-chart, #toggle-view, #normalize-button, #chart-view, #avg-table-view-btn, #table-view-btn, .pressable {
   background: linear-gradient(
     145deg,
     rgb(70,130,145),
@@ -324,7 +324,7 @@ header h1 a:hover::after, .selection-entry p:hover::after { transform: scaleX(1)
     box-shadow 0.15s ease;
 }
 
-#download-button-container button:hover, #data-download:hover, .nav-btn:hover, #update-chart:hover, #toggle-view:hover, #normalize-button:hover, #chart-view:hover, #table-view-btn:hover, .pressable:hover {
+#download-button-container button:hover, #data-download:hover, .nav-btn:hover, #update-chart:hover, #toggle-view:hover, #normalize-button:hover, #chart-view:hover, #avg-table-view-btn:hover, #table-view-btn:hover, .pressable:hover {
   cursor: pointer;
   transform: translateY(-2px);
   box-shadow:
@@ -332,7 +332,7 @@ header h1 a:hover::after, .selection-entry p:hover::after { transform: scaleX(1)
     0 14px 22px rgba(0,0,0,0.4);
 }
 
-#download-button-container button:active, #data-download:active, .nav-btn:active, #update-chart:active, #toggle-view:active, #normalize-button:active, #chart-view:active, #table-view-btn:active, .pressable:active {
+#download-button-container button:active, #data-download:active, .nav-btn:active, #update-chart:active, #toggle-view:active, #normalize-button:active, #chart-view:active, #avg-table-view-btn:active, #table-view-btn:active, .pressable:active {
   transform: translateY(4px);
   box-shadow:
     0 2px 0 rgb(18,40,48),

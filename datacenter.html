@@ -198,6 +198,7 @@ Last Updated: 12/20/2025
     <div id="view-button-container">
       <button id="chart-view">Chart View</button>
       <button id="table-view-btn">Annual Table View</button>
+      <button id="avg-table-view-btn">Average Table View</button>
       <button id="normalize-button">Normalize Data</button>
       <button id="update-chart">Update Data</button>
     </div>
@@ -251,6 +252,7 @@ Last Updated: 12/20/2025
 
   let isTableView = false;
   let isNormalized = false;
+  let isAverageTableView = false;
 
   /* Chart */
   let assetsChartInstance, liabilitiesChartInstance;
@@ -787,6 +789,28 @@ Last Updated: 12/20/2025
   let currentVariable = null;
 
   function updateChart() {
+    // Average Table View
+    if (isAverageTableView) {
+
+      // hide charts
+      assetsChart.parentElement.style.display = "none";
+      liabilitiesChart.parentElement.style.display = "none";
+
+      // destroy chart instances if they exist
+      if (assetsChartInstance) { assetsChartInstance.destroy(); assetsChartInstance = null; }
+      if (liabilitiesChartInstance) { liabilitiesChartInstance.destroy(); liabilitiesChartInstance = null; }
+
+      // show table panels
+      tableViewLeft.style.display = "block";
+      tableViewRight.style.display = "block";
+
+      // render average tables
+      renderAverageTable(tableViewLeft);
+      renderAverageTable(tableViewRight);
+
+      return;
+    }
+
     if (currentAssetVariable) {
       updateSingleChart('assets', currentAssetVariable, assetsChart, tableViewLeft);
     }
@@ -939,27 +963,36 @@ Last Updated: 12/20/2025
 
   const chartViewBtn = document.getElementById("chart-view");
   const tableViewBtn = document.getElementById("table-view-btn");
+  const avgTableViewBtn = document.getElementById("avg-table-view-btn");
 
   chartViewBtn.addEventListener("click", () => {
     isTableView = false;
+    isAverageTableView = false;
     updateChart();
   });
 
   tableViewBtn.addEventListener("click", () => {
     isTableView = true;
+    isAverageTableView = false;
+    updateChart();
+  });
+
+  avgTableViewBtn.addEventListener("click", () => {
+    isTableView = false;
+    isAverageTableView = true;
     updateChart();
   });
 
   /* Normalize Data */
   normalizeButton.addEventListener("click", () => {
     isNormalized = !isNormalized;
-    normalizeButton.textContent = isNormalized ? "Raw Data" : "Normalize";
+    normalizeButton.textContent = isNormalized ? "Raw Data" : "Normalize Data";
     updateChart();
   });
 
 /*------------------------------------------------------------------------------------------------------------*/
 
-/* Table View */
+/* Annual Table View */
 
 function renderTable(label, years, rawValues, adjValues, tableElement) {
   let html = `<h3 style="margin: 0; text-align:center;">${tableElement === tableViewLeft ? "Assets" : "Liabilities"}</h3>`;
@@ -991,6 +1024,99 @@ function renderTable(label, years, rawValues, adjValues, tableElement) {
 
   html += `</tbody></table>`;
 
+  tableElement.innerHTML = html;
+}
+
+/*------------------------------------------------------------------------------------------------------------*/
+
+/* Average Table View */
+
+function renderAverageTable(tableElement) {
+  const isLeft = (tableElement === tableViewLeft);
+  const sideTable = isLeft ? leftTable : rightTable;
+  const title = isLeft ? "Assets" : "Liabilities";
+
+  const selectedVars = [];
+  sideTable.querySelectorAll("li").forEach(li => {
+    const key = li.dataset.plotValue;
+    const check = li.querySelector(".checkmark");
+    if (!key || !check) return;
+    if (excludedSeries.has(key)) return;
+    selectedVars.push(key);
+  });
+
+  // build table
+  let html = `<h3 style="margin: 0; text-align:center;">${title}</h3>`;
+  html += `<p style="text-align:center; margin:0.4rem 0; color:#666; font-size:0.9rem;">
+    Average values over ${startYear}–${endYear}
+  </p>`;
+
+  html += `<table>
+    <thead>
+      <tr>
+        <th>Category</th>
+        <th>${isNormalized ? "Normalized Raw" : "Raw"}</th>
+        <th>${isNormalized ? "Normalized Adjusted" : "Adjusted"}</th>
+      </tr>
+    </thead>
+  `;
+
+  if (isNormalized) {
+    html += `<p style="text-align:center; margin:0.2rem 0 0.6rem; color:#666; font-size:0.9rem;">
+      Values normalized to 0–100 scale
+    </p>`;
+  }
+
+  const allYears = csvHeaders.slice(1).map(Number);
+
+  selectedVars.forEach(v => {
+    const rawRow = rawData.find(r => r.cols[0] === v);
+    if (!rawRow) return;
+
+    let rawSeries = rawRow.cols.slice(1).map(x => parseFloat(x));
+
+    const adjRow = adjustedData.find(r => r.cols[0] === v);
+    let adjSeries = adjRow ? adjRow.cols.slice(1).map(Number) : rawSeries;
+
+    // Apply normalization per-variable
+    if (isNormalized) {
+      const maxRaw = Math.max(...rawSeries.filter(n => Number.isFinite(n)));
+      const maxAdj = Math.max(...adjSeries.filter(n => Number.isFinite(n)));
+      const maxVal = Math.max(maxRaw, maxAdj, 1);
+
+      rawSeries = rawSeries.map(n => (Number.isFinite(n) ? (n / maxVal) * 100 : n));
+      adjSeries = adjSeries.map(n => (Number.isFinite(n) ? (n / maxVal) * 100 : n));
+    }
+
+    // Average over the chosen year range
+    let rawSum = 0, rawCnt = 0;
+    let adjSum = 0, adjCnt = 0;
+
+    for (let i = 0; i < allYears.length; i++) {
+      const y = allYears[i];
+      if (y < startYear || y > endYear) continue;
+
+      const rv = rawSeries[i];
+      const av = adjSeries[i];
+
+      if (Number.isFinite(rv)) { rawSum += rv; rawCnt++; }
+      if (Number.isFinite(av)) { adjSum += av; adjCnt++; }
+    }
+
+    const rawAvg = rawCnt ? (rawSum / rawCnt) : null;
+    const adjAvg = adjCnt ? (adjSum / adjCnt) : null;
+
+    const rawCell = (rawAvg == null) ? "" : (isNormalized ? rawAvg.toFixed(2) : Math.round(rawAvg).toLocaleString());
+    const adjCell = (adjAvg == null) ? "" : (isNormalized ? adjAvg.toFixed(2) : Math.round(adjAvg).toLocaleString());
+
+    html += `<tr>
+      <td>${v}</td>
+      <td>${rawCell}</td>
+      <td>${adjCell}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table>`;
   tableElement.innerHTML = html;
 }
 
