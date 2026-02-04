@@ -74,7 +74,21 @@ main.blurred { filter: blur(1px); }
   border-left: 1px solid rgba(0, 0, 0, 0.15);
 }
 
-li.excluded {
+.checkmark {
+  cursor: pointer;
+  margin-right: 6px;
+  font-weight: bold;
+}
+
+.checkmark:not(.excluded) {
+  color: #2e7d32;
+}
+
+.checkmark.excluded {
+  color: #c62828;
+}
+
+li.excluded > span:last-child {
   text-decoration: line-through;
   opacity: 0.6;
 }

@@ -281,7 +281,7 @@ Last Updated: 12/20/2025
 
     // Update toggle button
     isHidden = !isHidden;
-    selectionToggle.textContent = isHidden ? "☰" : "X";
+    selectionToggle.textContent = isHidden ? "☰" : "✖";
   }
 
 /*------------------------------------------------------------------------------------------------------------*/
@@ -447,18 +447,8 @@ Last Updated: 12/20/2025
 
         // Construct table header
         const h1 = document.createElement("h1");
-        h1.textContent = value;
+        h1.textContent = (sectionContainer === leftTable) ? "Assets" : "Liabilities";
         sectionContainer.appendChild(h1);
-        const headerTable = sectionContainer; 
-
-        h1.addEventListener("click", () => {
-          if (headerTable === leftTable) {
-            currentAssetVariable = value;
-          } else {
-            currentLiabilityVariable = value;
-          }
-          updateChart();
-        });
 
         stack.length = 0; // Reset stack
 
@@ -564,8 +554,9 @@ Last Updated: 12/20/2025
 
       // Button to exclude nested variables on click
       const excludeBtn = document.createElement("span");
-      excludeBtn.textContent = "X ";
-      excludeBtn.style.color = "red"
+      excludeBtn.textContent = "✔ ";
+      excludeBtn.classList.add("checkmark");
+
       li.appendChild(excludeBtn);
 
       // Text for list element
@@ -574,29 +565,27 @@ Last Updated: 12/20/2025
       li.appendChild(label);
       li.dataset.plotValue = text;
 
-      // Strikethrough label and excluded nested variables on click
-      excludeBtn.addEventListener("click", e => {
-        e.stopPropagation();
-        toggleExclude(text);
-        label.style.textDecoration = label.style.textDecoration === "line-through" ? "none" : "line-through";
-      });
+      function syncCheckmark() {
+        const isExcluded = excludedSeries.has(text);
 
-      // Plot variable on click
-      label.addEventListener("click", e => {
+        excludeBtn.textContent = isExcluded ? "✖" : "✔";
+        excludeBtn.classList.toggle("excluded", isExcluded);
+        label.classList.toggle("excluded", isExcluded);
+        li.classList.toggle("excluded", isExcluded);
+      }
+
+      function handleToggle(e) {
         e.stopPropagation();
-        
-        const clickedLi = e.currentTarget.closest('li');
-        if (!clickedLi) return;
-        
-        const isAsset = leftTable.contains(clickedLi);
-        
-        if (isAsset) {
-          currentAssetVariable = clickedLi.dataset.plotValue;
-        } else {
-          currentLiabilityVariable = clickedLi.dataset.plotValue;
-        }
+
+        toggleExclude(text);
+        syncCheckmark();
         updateChart();
-      });
+      }
+
+      label.addEventListener("click", handleToggle);
+      excludeBtn.addEventListener("click", handleToggle);
+
+      syncCheckmark();
 
       return li;
     }
@@ -842,7 +831,7 @@ Last Updated: 12/20/2025
         plugins: {
           title: { 
             display: true, 
-            text: `${type === 'assets' ? 'Assets: ' : 'Liabilities: '}${label}`, 
+            text: (type === 'assets') ? 'Assets' : 'Liabilities',
             font: { size: 16 } 
           },
           legend: { display: true }
