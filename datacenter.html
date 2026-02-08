@@ -484,6 +484,7 @@ Last Updated: 12/20/2025
     excludedSeries.clear();
     adjustedData = [];
     const stack = [];
+    let sectionRootUl = null;
 
     // Initialize state variables
     let startRowFound = false;
@@ -513,7 +514,8 @@ Last Updated: 12/20/2025
         h1.textContent = (sectionContainer === leftTable) ? "Assets" : "Liabilities";
         sectionContainer.appendChild(h1);
 
-        stack.length = 0; // Reset stack
+        stack.length = 0;
+        sectionRootUl = null;
 
       } else { // Non-header value
 
@@ -522,38 +524,75 @@ Last Updated: 12/20/2025
           stack.pop();
         }
 
-        // Add to parent variable's list (if it exists)
-        let parentUl = stack.length
-          ? stack[stack.length - 1].var
-          : null;
-
-        // Create new unordered list & add to stack if no parent
-        if (!parentUl) {
-          parentUl = document.createElement("ul");
-          sectionContainer.appendChild(parentUl);
-          stack.push({ var: parentUl, indent });
-        }
-
-        // Get next row indent to determine if current value has descendant variables
+        // Determine original hierarchy
         const nextRow = rawData[idx + 1];
         const nextIndent = nextRow ? nextRow.indent : -1;
         const willHaveChildren = nextIndent > indent;
 
-        // Create new list item and add to parent list
-        const li = nestedList(value, willHaveChildren);
-        parentUl.appendChild(li);
+        // Ensure a section root <ul> exists for this table section
+        if (!sectionRootUl) {
+          sectionRootUl = document.createElement("ul");
+          sectionContainer.appendChild(sectionRootUl);
+        }
 
-        // Create new unordered list & add to stack if current value has descendant variables
-        if (willHaveChildren) {
-          const newUl = document.createElement("ul");
-          newUl.style.display = "block";
-          li.appendChild(newUl);
-          stack.push({var: newUl, indent: (indent + 1)});
+        // Top-level row
+        if (stack.length === 0) {
+          const li = nestedList(value, willHaveChildren);
+          sectionRootUl.appendChild(li);
+
+          let childUl = null;
+          if (willHaveChildren) {
+            childUl = document.createElement("ul");
+            childUl.style.display = "block";
+            li.appendChild(childUl);
+          }
+
+          // Track this top-level parent (and keep its childUl reference)
+          stack.push({
+            name: value,
+            indent,
+            depth: 0,
+            childUl
+          });
+
+        } else {
+          // Flatten under the nearest top-level ancestor
+
+          // Find nearest top-level ancestor in the stack (depth === 0)
+          let topIdx = -1;
+          for (let i = stack.length - 1; i >= 0; i--) {
+            if (stack[i].depth === 0) { topIdx = i; break; }
+          }
+          const top = stack[topIdx];
+
+          if (willHaveChildren) {
+            stack.push({ name: value, indent, depth: 1 });
+            return;
+          }
+
+          // Leaf: render it as a direct child of the top-level parent with a prefix
+          const prefixParts = stack.slice(topIdx + 1).map(s => s.name);
+          const displayText = prefixParts.length
+            ? `${prefixParts.join(" - ")} - ${value}`
+            : value;
+
+          // Ensure top-level has a child <ul> to receive flattened children
+          if (!top.childUl) {
+            top.childUl = document.createElement("ul");
+            top.childUl.style.display = "block";
+
+            const topLi = sectionRootUl.lastElementChild;
+            topLi.appendChild(top.childUl);
+          }
+
+          const li = nestedList(displayText, false);
+          li.dataset.plotValue = value;
+          top.childUl.appendChild(li);
+
+          stack.push({ name: value, indent, depth: 1 });
         }
       }
-
-      if (value === endRow) endRowFound = true; // Check if designated last row found
-    });
+  });
 
     // Insert buttons at bottom of the sidebars
     function addSideButtons(tableEl, sideName) {
@@ -663,7 +702,8 @@ Last Updated: 12/20/2025
       function syncCheckmark() {
         if (hasChildren) return;
 
-        const isExcluded = excludedSeries.has(text);
+        const key = li.dataset.plotValue;
+        const isExcluded = excludedSeries.has(key);
         excludeBtn.textContent = isExcluded ? "✖" : "✔";
         excludeBtn.classList.toggle("excluded", isExcluded);
         label.classList.toggle("excluded", isExcluded);
@@ -673,7 +713,8 @@ Last Updated: 12/20/2025
       function handleToggle(e) {
         e.stopPropagation();
 
-        toggleExclude(text);
+        const key = li.dataset.plotValue;
+        toggleExclude(key);
         syncCheckmark();
         updateChart();
       }
