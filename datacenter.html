@@ -546,7 +546,7 @@ Last Updated: 12/20/2025
         // Create new unordered list & add to stack if current value has descendant variables
         if (willHaveChildren) {
           const newUl = document.createElement("ul");
-          newUl.style.display = (value === "Net worth") ? "block" : "none";
+          newUl.style.display = "block";
           li.appendChild(newUl);
           stack.push({var: newUl, indent: (indent + 1)});
         }
@@ -626,7 +626,7 @@ Last Updated: 12/20/2025
       let arrow;
       if (hasChildren) {
         arrow = document.createElement("span");
-        arrow.textContent = (text === "Net worth") ? "▼ " : "▶ ";
+        arrow.textContent = "▼ ";
         arrow.style.userSelect = "none";
         li.appendChild(arrow);
 
