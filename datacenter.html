@@ -450,6 +450,7 @@ Last Updated: 12/20/2025
       const key = li.dataset.plotValue;
       const check = li.querySelector(".checkmark");
       if (!key || !check) return;
+      if (li.querySelector("ul")) return;
 
       if (makeExcluded) excludedSeries.add(key);
       else excludedSeries.delete(key);
@@ -645,10 +646,13 @@ Last Updated: 12/20/2025
       }
 
       // Button to exclude nested variables on click
-      const excludeBtn = document.createElement("span");
-      excludeBtn.textContent = "✔ ";
-      excludeBtn.classList.add("checkmark");
-      li.appendChild(excludeBtn);
+      let excludeBtn = null;
+      if (!hasChildren) {
+        excludeBtn = document.createElement("span");
+        excludeBtn.textContent = "✔ ";
+        excludeBtn.classList.add("checkmark");
+        li.appendChild(excludeBtn);
+      }
 
       // Text for list element
       const label = document.createElement("span");
@@ -657,8 +661,9 @@ Last Updated: 12/20/2025
       li.dataset.plotValue = text;
 
       function syncCheckmark() {
-        const isExcluded = excludedSeries.has(text);
+        if (hasChildren) return;
 
+        const isExcluded = excludedSeries.has(text);
         excludeBtn.textContent = isExcluded ? "✖" : "✔";
         excludeBtn.classList.toggle("excluded", isExcluded);
         label.classList.toggle("excluded", isExcluded);
@@ -673,10 +678,11 @@ Last Updated: 12/20/2025
         updateChart();
       }
 
-      label.addEventListener("click", handleToggle);
-      excludeBtn.addEventListener("click", handleToggle);
-
-      syncCheckmark();
+      if (!hasChildren) {
+        label.addEventListener("click", handleToggle);
+        excludeBtn.addEventListener("click", handleToggle);
+        syncCheckmark();
+      }
 
       return li;
     }
@@ -1041,6 +1047,10 @@ function renderAverageTable(tableElement) {
     const key = li.dataset.plotValue;
     const check = li.querySelector(".checkmark");
     if (!key || !check) return;
+
+    // skip parents/roll-ups
+    if (li.querySelector("ul")) return;
+
     if (excludedSeries.has(key)) return;
     selectedVars.push(key);
   });
