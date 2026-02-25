@@ -3,7 +3,7 @@ Created and maintained by student research assistants at the
           HELLER-HURWICZ ECONOMICS INSTITUTE
         University of Minnesota - Twin Cities
 
-Last Updated: 12/20/2025
+Last Updated: 02/25/2026
 -->
 
 <!DOCTYPE html>
@@ -194,7 +194,7 @@ Last Updated: 12/20/2025
       <div id="table-view-right" style="display:none;"></div>
     </div>
 
-    <!-- Chart Update & Toggle View (Chart/Table) Buttons -->
+    <!-- Visualization Update Buttons -->
     <div id="view-button-container">
       <button id="chart-view">Chart View</button>
       <button id="table-view-btn">Annual Table View</button>
@@ -234,11 +234,11 @@ Last Updated: 12/20/2025
   /* MAIN CONTENTS */
   const main = document.querySelector('main');
 
-    /* Tables */
+  /* TABLES */
   const leftTable = document.getElementById('table-left');
   const rightTable = document.getElementById('table-right');
 
-  /* Chart */
+  /* CHARTS */
   const downloadAssetChart = document.getElementById("download-asset-chart");
   const downloadLiabilityChart = document.getElementById("download-liability-chart");
   const downloadSeries = document.getElementById("download-series");
@@ -254,7 +254,6 @@ Last Updated: 12/20/2025
   let isNormalized = false;
   let isAverageTableView = false;
 
-  /* Chart */
   let assetsChartInstance, liabilitiesChartInstance;
   let currentAssetVariable = null;
   let currentLiabilityVariable = null;
@@ -295,7 +294,6 @@ Last Updated: 12/20/2025
       item.querySelector('p').textContent = `${index + 1}. ${item.textContent}`
   });
 
-
   // Bold dataset on click
   function highlightDataset(dataset) {
     selectionEntries.forEach(item => item.classList.remove('active'));
@@ -313,7 +311,7 @@ Last Updated: 12/20/2025
   let adjustedData = [];
   let csvHeaders = [];
 
-  // Track ancestor variables in 2D array and excluded series in a new set
+  // Track ancestor variables
   const hierarchy = [];
   const excludedSeries = new Set();
   
@@ -435,7 +433,7 @@ Last Updated: 12/20/2025
       if (!key) return;
 
       const check = li.querySelector(".checkmark");
-      if (!check) return; // only leaf nodes have checkmarks in your setup
+      if (!check) return;
 
       const isExcluded = excludedSeries.has(key);
       const code = li.dataset.varCode ? ` ${li.dataset.varCode}` : "";
@@ -526,8 +524,8 @@ Last Updated: 12/20/2025
       const indent = row.indent;
 
       if (value === startRow) startRowFound = true;
-      if (!startRowFound || endRowFound) return; // Skip row if before start or after end
-      if (value.includes("Addendum")) return;    // Skip designated rows
+      if (!startRowFound || endRowFound) return;
+      if (value.includes("Addendum")) return;
 
       // Variable names
       if (headers.includes(value)) {
@@ -582,8 +580,7 @@ Last Updated: 12/20/2025
             childUl
           });
 
-        } else {
-          // Flatten under the nearest top-level ancestor
+        } else { // Flatten under the nearest top-level ancestor
 
           // Find nearest top-level ancestor in the stack (depth === 0)
           let topIdx = -1;
@@ -671,7 +668,7 @@ Last Updated: 12/20/2025
     // Plot initial variables for both charts
     const firstRow = rawData.find(r => r.cols[0].trim() === startRow);
     if (firstRow) {
-      currentAssetVariable = headers[0];  // Total assets
+      currentAssetVariable = headers[0];      // Total assets
       currentLiabilityVariable = headers[1];  // Total liabilities
       
       updateChart();  // Update both charts
@@ -863,7 +860,6 @@ Last Updated: 12/20/2025
     link.download = "full_dataset.csv";
     link.click();
   });
-
 
   /* Chart Canvas */
 
@@ -1096,6 +1092,8 @@ function renderTable(label, years, rawValues, adjValues, tableElement) {
     const r = rawValues[i];
     const a = adjValues[i];
 
+    if (!Number.isFinite(r) && !Number.isFinite(a)) continue;
+
     html += `<tr>
       <td>${y}</td>
       <td>${Number.isFinite(r) ? (isNormalized ? r.toFixed(2) : r.toLocaleString()) : ""}</td>
@@ -1245,7 +1243,6 @@ function renderAverageTable(tableElement) {
     const rightLimit = rightRect.left + thumbWidth / 2;
     const leftLimit = leftRect.right - thumbWidth / 2;
 
-
     if (activeThumb === leftThumb) {
       // Prevent left thumb from going past right thumb
       x = Math.min(x, rightLimit);
@@ -1288,7 +1285,6 @@ function renderAverageTable(tableElement) {
     if (startYear !== appliedStart || endYear !== appliedEnd) {
       applyBtn.style.visibility = "visible";
     }
-
   }
 
   /**
