@@ -154,7 +154,7 @@ Last Updated: 02/25/2026
     "buildTables(
       'adjustedgdpgdi',
       'Adjusted GDP', 
-      'Adjusted GDI',
+      '',
       headers = ['Adjusted GDP', 'Adjusted GDI'],
       '𝘕𝘢𝘵𝘪𝘰𝘯𝘢𝘭 𝘐𝘯𝘤𝘰𝘮𝘦 𝘢𝘯𝘥 𝘗𝘳𝘰𝘥𝘶𝘤𝘵 𝘈𝘤𝘤𝘰𝘶𝘯𝘵𝘴. U.S. Bureau of Economic Analysis.'
     ); highlightDataset(this);"
@@ -168,10 +168,10 @@ Last Updated: 02/25/2026
   <button id="table2" class="selection-entry" onclick="
     buildTables(
       'table2_timeseries',
-      'NIPA GDI',
+      'ADJUSTED GDI',
       '',
-      headers = ['NIPA GDI', 'NIPA GDP'],
-      'Source description here.'
+      headers = ['ADJUSTED GDI', 'ADJUSTED GDP'],
+      'Source description TBA.'
     ); highlightDataset(this);"
   ><p> Table 2 Time Series </p></button>
 
@@ -179,10 +179,10 @@ Last Updated: 02/25/2026
   <button id="table6" class="selection-entry" onclick="
     buildTables(
       'table6_timeseries',
-      'NIPA GDI',
+      'ADJUSTED GDI',
       '',
-      headers = ['NIPA GDI', 'NIPA GDP'],
-      'Source description here.'
+      headers = ['ADJUSTED GDI', 'ADJUSTED GDP'],
+      'Source description TBA.'
     ); highlightDataset(this);"
   ><p> Table 6 Time Series </p></button>
 </div>
@@ -398,7 +398,6 @@ Last Updated: 02/25/2026
    *    {Array<Array<String>>} rawData - a 2D array of all other values in the CSV.
    */ 
   async function loadCSV(fname) {
-
     // Load and clean CSV data
     const text = await fetch(`DATA/${fname}.csv`).then(r => r.text());
     const csv = text;
@@ -413,9 +412,19 @@ Last Updated: 02/25/2026
       else {
         // Store indentation and trim variable name
         const rawValue = vals[0];
-        const value = rawValue.trim();
+        let value = rawValue.trim();
+
+        if (value.startsWith("+") || value.startsWith("=")) {
+          value = value.substring(1).trim();
+        }
+
+        if (value.startsWith("-")) {
+          value = "Less: " + value.substring(1).trim();
+        }
+
         const indent = rawValue.match(/^\s*/)[0].length;
         vals[0] = value;
+
         rawData.push({
           cols: vals,
           indent
@@ -432,10 +441,6 @@ Last Updated: 02/25/2026
 
     rawData.forEach(row => {
       const newRow = { cols: [...row.cols], indent: row.indent };
-
-      if (row.cols[0] === "NIPA GDI" || row.cols[0] === "NIPA GDP") {
-        stack.length = 0;
-      }
 
       if (row.cols[0] === leftPanelTitle || row.cols[0] === rightPanelTitle) {
         stack.length = 0;
@@ -566,8 +571,6 @@ Last Updated: 02/25/2026
       const value = row.cols[0];
       const indent = row.indent;
 
-      if (value === "ADJUSTED GDI" || value === "ADJUSTED GDP") return;
-
       // Track which big block we're currently in
       if (value === headers[0]) currentSection = "left";
       if (value === headers[1]) currentSection = "right";
@@ -654,9 +657,15 @@ Last Updated: 02/25/2026
 
           // Leaf: render it as a direct child of the top-level parent with a prefix
           const prefixParts = stack.slice(topIdx + 1).map(s => s.name);
-          const displayText = prefixParts.length
-            ? `${prefixParts.join(" - ")} - ${value}`
-            : value;
+          let cleanValue = value.replace(/^Less:\s*/, "");
+
+          const baseText = prefixParts.length
+            ? `${prefixParts.join(" - ")} - ${cleanValue}`
+            : cleanValue;
+
+          const displayText = value.startsWith("Less:")
+            ? `Less: ${baseText}`
+            : baseText;
 
           // Ensure top-level has a child <ul> to receive flattened children
           if (!top.childUl) {
