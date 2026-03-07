@@ -164,28 +164,47 @@ Last Updated: 02/25/2026
     <h3> Other </h3>
   </a>
 
-  <!-- Table 2 Time Series -->
-  <button id="table2" class="selection-entry" onclick="
-    buildTables(
+  <!-- Table 2 GDI Time Series -->
+  <button id="table2_gdi" class="selection-entry" onclick="
+    buildAdjustedSplitTable(
       'table2_timeseries',
       'ADJUSTED GDI',
-      '',
-      headers = ['ADJUSTED GDI', 'ADJUSTED GDP'],
+      'NIPA GDI',
       'Source description TBA.'
     ); highlightDataset(this);"
-  ><p> Table 2 Time Series </p></button>
+  ><p> Table 2 Adjusted GDI </p></button>
 
-  <!-- Table 6 Time Series -->
-  <button id="table6" class="selection-entry" onclick="
-    buildTables(
+  <!-- Table 2 GDP Time Series -->
+  <button id="table2_gdp" class="selection-entry" onclick="
+    buildAdjustedSplitTable(
+      'table2_timeseries',
+      'ADJUSTED GDP',
+      'NIPA GDP',
+      'Source description TBA.'
+    ); highlightDataset(this);"
+  ><p> Table 2 Adjusted GDP </p></button>
+
+  <!-- Table 6 GDI Time Series -->
+  <button id="table6_gdi" class="selection-entry" onclick="
+    buildAdjustedSplitTable(
       'table6_timeseries',
       'ADJUSTED GDI',
-      '',
-      headers = ['ADJUSTED GDI', 'ADJUSTED GDP'],
+      'NIPA GDI',
       'Source description TBA.'
     ); highlightDataset(this);"
-  ><p> Table 6 Time Series </p></button>
-</div>
+  ><p> Table 6 Adjusted GDI </p></button>
+
+  <!-- Table 6 GDP Time Series -->
+  <button id="table6_gdp" class="selection-entry" onclick="
+    buildAdjustedSplitTable(
+      'table6_timeseries',
+      'ADJUSTED GDP',
+      'NIPA GDP',
+      'Source description TBA.'
+    ); highlightDataset(this);"
+  ><p> Table 6 Adjusted GDP </p></button>
+
+  </div>
 
 <!------------------------------------------------------------------------------------------------------------>
 
@@ -412,7 +431,8 @@ Last Updated: 02/25/2026
       else {
         // Store indentation and trim variable name
         const rawValue = vals[0];
-        let value = rawValue.trim();
+        const originalName = rawValue.trim();
+        let value = originalName;
 
         if (value.startsWith("+") || value.startsWith("=")) {
           value = value.substring(1).trim();
@@ -427,7 +447,8 @@ Last Updated: 02/25/2026
 
         rawData.push({
           cols: vals,
-          indent
+          indent,
+          originalName
         });
       }
     });
@@ -528,6 +549,99 @@ Last Updated: 02/25/2026
     recomputeAdjustedData();
     refreshTableUI(tableEl);
     updateChart();
+  }
+
+  function nestedList(text, hasChildren) {
+    const li = document.createElement("li");
+    li.style.cursor = "pointer";
+
+    let arrow;
+    if (hasChildren) {
+      arrow = document.createElement("span");
+      arrow.textContent = "▼ ";
+      arrow.style.userSelect = "none";
+      li.appendChild(arrow);
+
+      arrow.addEventListener("click", e => {
+        e.stopPropagation();
+        const childUl = li.querySelector("ul");
+        if (!childUl) return;
+        if (childUl.style.display === "none") {
+          childUl.style.display = "block";
+          arrow.textContent = "▼ ";
+        } else {
+          childUl.style.display = "none";
+          arrow.textContent = "▶ ";
+        }
+      });
+    }
+
+    let excludeBtn = null;
+    if (!hasChildren) {
+      excludeBtn = document.createElement("span");
+      excludeBtn.textContent = "✔ ";
+      excludeBtn.classList.add("checkmark");
+      li.appendChild(excludeBtn);
+    }
+
+    const label = document.createElement("span");
+    label.textContent = text;
+    li.dataset.label = text;
+    li.appendChild(label);
+
+    function syncCheckmark() {
+      if (hasChildren) return;
+
+      const key = `${li.dataset.section}||${li.dataset.plotValue}`;
+      const isExcluded = excludedSeries.has(key);
+      const code = li.dataset.varCode ? ` ${li.dataset.varCode}` : "";
+      excludeBtn.textContent = (isExcluded ? "✖" : "✔") + code;
+      excludeBtn.classList.toggle("excluded", isExcluded);
+      label.classList.toggle("excluded", isExcluded);
+      li.classList.toggle("excluded", isExcluded);
+    }
+
+    function handleToggle(e) {
+      e.stopPropagation();
+      const key = `${li.dataset.section}||${li.dataset.plotValue}`;
+      toggleExclude(key);
+      syncCheckmark();
+      updateChart();
+    }
+
+    if (!hasChildren) {
+      label.addEventListener("click", handleToggle);
+      excludeBtn.addEventListener("click", handleToggle);
+      syncCheckmark();
+    }
+
+    return li;
+  }
+
+  function addSideButtons(tableEl) {
+    const old = tableEl.querySelector(".side-button-bar");
+    if (old) old.remove();
+
+    const bar = document.createElement("div");
+    bar.className = "side-button-bar";
+
+    const deselectBtn = document.createElement("button");
+    deselectBtn.className = "pressable";
+    deselectBtn.textContent = "Deselect All";
+    deselectBtn.addEventListener("click", () => {
+      setAllForSide(tableEl, true);
+    });
+
+    const selectBtn = document.createElement("button");
+    selectBtn.className = "pressable";
+    selectBtn.textContent = "Select All";
+    selectBtn.addEventListener("click", () => {
+      setAllForSide(tableEl, false);
+    });
+
+    bar.appendChild(deselectBtn);
+    bar.appendChild(selectBtn);
+    tableEl.appendChild(bar);
   }
 
   /**
@@ -692,33 +806,6 @@ Last Updated: 02/25/2026
     }
   );
 
-    // Insert buttons at bottom of the sidebars
-    function addSideButtons(tableEl, sideName) {
-      const old = tableEl.querySelector(".side-button-bar");
-      if (old) old.remove();
-
-      const bar = document.createElement("div");
-      bar.className = "side-button-bar";
-
-      const deselectBtn = document.createElement("button");
-      deselectBtn.className = "pressable";
-      deselectBtn.textContent = "Deselect All";
-      deselectBtn.addEventListener("click", () => {
-        setAllForSide(tableEl, true);
-      });
-
-      const selectBtn = document.createElement("button");
-      selectBtn.className = "pressable";
-      selectBtn.textContent = "Select All";
-      selectBtn.addEventListener("click", () => {
-        setAllForSide(tableEl, false);
-      });
-
-      bar.appendChild(deselectBtn);
-      bar.appendChild(selectBtn);
-      tableEl.appendChild(bar);
-    }
-
     addSideButtons(leftTable, "assets");
     addSideButtons(rightTable, "liabilities");
 
@@ -743,91 +830,136 @@ Last Updated: 02/25/2026
     }
 
     toggleSelection(); // Toggle dataset selection menu
+  }
 
-    /**
-     *  Builds two tables from CSV data that plot a selected variable when clicked. Dynamically creates
-     *  hierarchical structure of table based on the level of indentation used in the CSV.
-     * 
-     *  @param {String} text - the text content of the list item.
-     *  @param {Boolean} hasChildren - indicates whether the current list item has descendant (nested) items.
-     * 
-     *  @returns {HTMLElement} li - an HTML list item
-    */ 
-    function nestedList(text, hasChildren) {
+  async function buildAdjustedSplitTable(fname, blockHeader, nipaRow, source) {
+    const { rawData, csvHeaders } = await loadCSV(fname);
 
-      // Create list item
-      const li = document.createElement("li");
-      li.style.cursor = "pointer";
+    leftTable.innerHTML = '';
+    rightTable.innerHTML = '';
+    excludedSeries.clear();
+    adjustedData = [];
 
-      // Add arrow for dropdown if li has descendants
-      let arrow;
-      if (hasChildren) {
-        arrow = document.createElement("span");
-        arrow.textContent = "▼ ";
-        arrow.style.userSelect = "none";
-        li.appendChild(arrow);
+    leftPanelTitle = blockHeader;
+    rightPanelTitle = blockHeader;
 
-        // Open/close dropdown on click
-        arrow.addEventListener("click", e => {
-          e.stopPropagation();
-          const childUl = li.querySelector("ul");
-          if (!childUl) return;
-          if (childUl.style.display === "none") {
-            childUl.style.display = "block";
-            arrow.textContent = "▼ ";
-          } else {
-            childUl.style.display = "none";
-            arrow.textContent = "▶ ";
-          }
-        });
+    // find rows in the selected block only
+    let inBlock = false;
+    const blockRows = [];
+
+    rawData.forEach((row) => {
+      const value = row.cols[0];
+
+      if (value === blockHeader) {
+        inBlock = true;
+        return;
       }
 
-      // Button to exclude nested variables on click
-      let excludeBtn = null;
-      if (!hasChildren) {
-        excludeBtn = document.createElement("span");
-        excludeBtn.textContent = "✔ ";
-        excludeBtn.classList.add("checkmark");
-        li.appendChild(excludeBtn);
+      if (
+        inBlock &&
+        (value === "ADJUSTED GDI" || value === "ADJUSTED GDP")
+      ) {
+        inBlock = false;
       }
 
-      // Text for list element
-      const label = document.createElement("span");
-      label.textContent = text;
-      li.dataset.label = text;
-      li.appendChild(label);
+      if (inBlock) {
+        blockRows.push(row);
+      }
+    });
 
-      function syncCheckmark() {
-        if (hasChildren) return;
+    // split block: before first "=" goes left, from first "=" onward goes right
+    const leftRows = [];
+    const rightRows = [];
+    let hitEqualsSection = false;
 
-        const key = `${li.dataset.section}||${li.dataset.plotValue}`;
-        const isExcluded = excludedSeries.has(key);
-        const code = li.dataset.varCode ? ` ${li.dataset.varCode}` : "";
-        excludeBtn.textContent = (isExcluded ? "✖" : "✔") + code;
-        excludeBtn.classList.toggle("excluded", isExcluded);
-        label.classList.toggle("excluded", isExcluded);
-        li.classList.toggle("excluded", isExcluded);
+    blockRows.forEach((row) => {
+      const original = row.originalName || row.cols[0];
+
+      if (original.startsWith("=")) {
+        hitEqualsSection = true;
       }
 
-      function handleToggle(e) {
-        e.stopPropagation();
+      if (hitEqualsSection) {
+        row.section = "right";
+        rightRows.push(row);
+      } else {
+        row.section = "left";
+        leftRows.push(row);
+      }
+    });
 
-        const key = `${li.dataset.section}||${li.dataset.plotValue}`;
-        toggleExclude(key);
+    buildStructuredSide(leftTable, leftPanelTitle, leftRows, "left");
+    buildStructuredSide(rightTable, rightPanelTitle, rightRows, "right");
 
-        syncCheckmark();
-        updateChart();
+    assignVarCodes(leftTable);
+    assignVarCodes(rightTable);
+    refreshTableUI(leftTable);
+    refreshTableUI(rightTable);
+
+    addSideButtons(leftTable);
+    addSideButtons(rightTable);
+
+    const years = csvHeaders.slice(1).map(Number).filter(y => !isNaN(y));
+    appliedStart = startYear = minYear = Math.min(...years);
+    appliedEnd = endYear = maxYear = Math.max(...years);
+    sliderYears.textContent = `${minYear} - ${maxYear}`;
+    resetSlider();
+
+    curSource = source;
+
+    currentAssetVariable = nipaRow;
+    currentLiabilityVariable = blockHeader;
+
+    recomputeAdjustedData();
+    updateChart();
+    toggleSelection();
+  }
+
+  function buildStructuredSide(container, title, rows, sectionName) {
+    container.innerHTML = '';
+
+    const h1 = document.createElement("h1");
+    h1.textContent = title;
+    container.appendChild(h1);
+
+    const rootUl = document.createElement("ul");
+    container.appendChild(rootUl);
+
+    const stack = [];
+
+    rows.forEach((row, idx) => {
+      const value = row.cols[0];
+      const indent = row.indent;
+
+      while (stack.length && indent <= stack[stack.length - 1].indent) {
+        stack.pop();
       }
 
-      if (!hasChildren) {
-        label.addEventListener("click", handleToggle);
-        excludeBtn.addEventListener("click", handleToggle);
-        syncCheckmark();
+      const nextRow = rows[idx + 1];
+      const nextIndent = nextRow ? nextRow.indent : -1;
+      const willHaveChildren = nextIndent > indent;
+
+      const li = nestedList(value, willHaveChildren);
+      li.dataset.plotValue = value;
+      li.dataset.section = sectionName;
+
+      if (stack.length === 0) {
+        rootUl.appendChild(li);
+      } else {
+        let parent = stack[stack.length - 1];
+        let childUl = Array.from(parent.li.children).find(ch => ch.tagName === "UL");
+
+        if (!childUl) {
+          childUl = document.createElement("ul");
+          childUl.style.display = "block";
+          parent.li.appendChild(childUl);
+        }
+
+        childUl.appendChild(li);
       }
 
-      return li;
-    }
-
+      stack.push({ li, indent });
+    });
   }
 
   /**
