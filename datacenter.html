@@ -981,6 +981,163 @@ Last Updated: 02/25/2026
     if (currentAssetVariable || currentLiabilityVariable) updateChart();
   }
 
+  function buildFlatLeftSide(container, title, rows, sectionName, nipaRow) {
+    container.innerHTML = '';
+
+    const h1 = document.createElement("h1");
+    h1.textContent = title;
+    container.appendChild(h1);
+
+    const rootUl = document.createElement("ul");
+    container.appendChild(rootUl);
+
+    let rootLi = null;
+    let childUl = null;
+
+    rows.forEach((row) => {
+      const value = row.cols[0];
+
+      if (value === nipaRow) {
+        rootLi = nestedList(value, true);
+        rootLi.dataset.section = sectionName;
+        rootUl.appendChild(rootLi);
+
+        childUl = document.createElement("ul");
+        childUl.style.display = "block";
+        rootLi.appendChild(childUl);
+        return;
+      }
+
+      if (!rootLi || !childUl) return;
+
+      const li = nestedList(value, false);
+      li.dataset.plotValue = value;
+      li.dataset.section = sectionName;
+      childUl.appendChild(li);
+    });
+  }
+
+  function buildFlatRightSide(container, title, rows, sectionName) {
+    container.innerHTML = '';
+
+    const h1 = document.createElement("h1");
+    h1.textContent = title;
+    container.appendChild(h1);
+
+    const rootUl = document.createElement("ul");
+    container.appendChild(rootUl);
+
+    let currentRootLi = null;
+    let currentChildUl = null;
+
+    rows.forEach((row) => {
+      const value = row.cols[0];
+      const original = (row.originalName || "").trim();
+
+      const isTopLevelMarker =
+        row.indent <= 2 && (original.startsWith("=") || original.startsWith("+"));
+
+      if (isTopLevelMarker) {
+        currentRootLi = nestedList(value, true);
+        currentRootLi.dataset.section = sectionName;
+        rootUl.appendChild(currentRootLi);
+
+        currentChildUl = document.createElement("ul");
+        currentChildUl.style.display = "block";
+        currentRootLi.appendChild(currentChildUl);
+        return;
+      }
+
+      if (!currentRootLi || !currentChildUl) return;
+
+      const li = nestedList(value, false);
+      li.dataset.plotValue = value;
+      li.dataset.section = sectionName;
+      currentChildUl.appendChild(li);
+    });
+  }
+
+  async function buildAdjustedSplitTable(fname, blockHeader, nipaRow, source) {
+    const { rawData, csvHeaders } = await loadCSV(fname);
+
+    leftTable.innerHTML = '';
+    rightTable.innerHTML = '';
+    excludedSeries.clear();
+    adjustedData = [];
+
+    leftPanelTitle = blockHeader;
+    rightPanelTitle = blockHeader;
+
+    // collect rows inside just this block
+    let inBlock = false;
+    const blockRows = [];
+
+    rawData.forEach((row) => {
+      const value = row.cols[0];
+
+      if (value === blockHeader) {
+        inBlock = true;
+        return;
+      }
+
+      if (inBlock && (value === "ADJUSTED GDI" || value === "ADJUSTED GDP")) {
+        inBlock = false;
+      }
+
+      if (inBlock) blockRows.push(row);
+    });
+
+    // split into:
+    // left = NIPA row and everything until first top-level marker
+    // right = top-level marker sections and their contents
+    const leftRows = [];
+    const rightRows = [];
+
+    let hitRightSide = false;
+
+    blockRows.forEach((row) => {
+      const original = (row.originalName || "").trim();
+
+      const isTopLevelMarker =
+        row.indent <= 2 && (original.startsWith("=") || original.startsWith("+"));
+
+      if (isTopLevelMarker) hitRightSide = true;
+
+      if (hitRightSide) {
+        row.section = "right";
+        rightRows.push(row);
+      } else {
+        row.section = "left";
+        leftRows.push(row);
+      }
+    });
+
+    buildFlatLeftSide(leftTable, blockHeader, leftRows, "left", nipaRow);
+    buildFlatRightSide(rightTable, blockHeader, rightRows, "right");
+
+    assignVarCodes(leftTable);
+    assignVarCodes(rightTable);
+    refreshTableUI(leftTable);
+    refreshTableUI(rightTable);
+
+    addSideButtons(leftTable);
+    addSideButtons(rightTable);
+
+    const years = csvHeaders.slice(1).map(Number).filter(y => !isNaN(y));
+    appliedStart = startYear = minYear = Math.min(...years);
+    appliedEnd = endYear = maxYear = Math.max(...years);
+    sliderYears.textContent = `${minYear} - ${maxYear}`;
+    resetSlider();
+
+    curSource = source;
+
+    currentAssetVariable = nipaRow;
+    currentLiabilityVariable = blockHeader;
+
+    recomputeAdjustedData();
+    updateChart();
+    toggleSelection();
+  }
 
   /* Chart */
 
