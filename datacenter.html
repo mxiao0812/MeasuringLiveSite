@@ -954,8 +954,9 @@ Last Updated: 02/25/2026
       const value = row.cols[0];
 
       if (value === nipaRow) {
-        rootLi = nestedList(value, true);
+        rootLi = nestedList(title, true);
         rootLi.dataset.section = sectionName;
+        rootLi.dataset.plotValue = title;
         rootUl.appendChild(rootLi);
 
         childUl = document.createElement("ul");
@@ -1088,7 +1089,7 @@ Last Updated: 02/25/2026
 
     curSource = source;
 
-    currentAssetVariable = nipaRow;
+    currentAssetVariable = blockHeader;
     currentLiabilityVariable = blockHeader;
 
     recomputeAdjustedData();
