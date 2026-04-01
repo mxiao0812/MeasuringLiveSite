@@ -266,6 +266,36 @@ li.excluded > span:not(.checkmark):not(:first-child) {
   font-size: 0.6rem; 
 }
 
+/* single-visualization mode */
+main.single-mode #table-right {
+  display: none !important;
+}
+
+main.single-mode #chart-container {
+  width: 80%;
+}
+
+main.single-mode #chart-content {
+  grid-template-columns: 1fr !important;
+}
+
+main.single-mode #data-chart-left,
+main.single-mode #table-view-left {
+  grid-column: 1 / -1 !important;
+  grid-row: 1;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+main.single-mode #table-view-left {
+  display: block;
+}
+
+main.single-mode #data-chart-right,
+main.single-mode #table-view-right {
+  display: none !important;
+}
+
 /*************************************************************************************************************/
 
 .side-button-bar {

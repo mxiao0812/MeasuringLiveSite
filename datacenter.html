@@ -164,6 +164,15 @@ Last Updated: 02/25/2026
     <h3> Other </h3>
   </a>
 
+  <!-- Individual Totals -->
+  <button id="individual_totals" class="selection-entry" onclick="
+    buildSingleTotalsTable(
+      'Individual_Totals',
+      'Individual Totals',
+      'Source description TBA.'
+    ); highlightDataset(this);"
+  ><p> Individual Totals </p></button>
+
   <!-- Table 2 GDI Time Series -->
   <button id="table2_gdi" class="selection-entry" onclick="
     buildAdjustedSplitTable(
@@ -306,6 +315,7 @@ Last Updated: 02/25/2026
   let rightPanelTitle = "Liabilities";
 
   let currentDatasetMode = "regular";
+  let isSingleVisualizationMode = false;
 
   /* YEAR SELECT */
   const sliderYears = document.getElementById("slider-years");
@@ -419,19 +429,22 @@ Last Updated: 02/25/2026
    *    {Array<Array<String>>} rawData - a 2D array of all other values in the CSV.
    */ 
   async function loadCSV(fname) {
-    // Load and clean CSV data
     const text = await fetch(`DATA/${fname}.csv`).then(r => r.text());
-    const csv = text;
     const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
 
-    // Parse CSV to plot-ready format
     rawData = [];
+
     rows.forEach((row, idx) => {
-      const vals = parseline(row); // keep spaces for indentation
-      if (idx === 0) csvHeaders = vals;
-      if (idx === 0) csvHeaders = vals;
-      else {
-        // Store indentation and trim variable name
+      const vals = parseline(row);
+
+      if (idx === 0) {
+        csvHeaders = vals.map((v, i) => {
+          if (i === 0) return v;
+
+          const num = parseFloat(v);
+          return isNaN(num) ? v : num;
+        });
+      } else {
         const rawValue = vals[0];
         const originalName = rawValue.trim();
         let value = originalName;
@@ -454,7 +467,7 @@ Last Updated: 02/25/2026
         });
       }
     });
-    
+
     return { rawData, csvHeaders };
   }
 
@@ -605,6 +618,19 @@ Last Updated: 02/25/2026
   }
 
   function setAllForSide(tableEl, makeExcluded) {
+    // single datasets
+    if (currentDatasetMode === "single") {
+      rawData.forEach(row => {
+        const k = `left||${row.cols[0]}`;
+        if (makeExcluded) excludedSeries.add(k);
+        else excludedSeries.delete(k);
+      });
+
+      refreshTableUI(leftTable);
+      updateChart();
+      return;
+    }
+
     // regular datasets
     if (currentDatasetMode === "regular") {
       const side = (tableEl === leftTable) ? "left" : "right";
@@ -756,6 +782,11 @@ Last Updated: 02/25/2026
     // Pass in the right headers by CSV
     leftPanelTitle = headers[0] || "Left";
     rightPanelTitle = headers[1] || "Right";
+
+    isSingleVisualizationMode = false;
+    main.classList.remove("single-mode");
+    tableViewRight.style.display = "";
+    downloadLiabilityChart.style.display = "";
     
     const { rawData, csvHeaders } = await loadCSV(fname); // Load data
 
@@ -1028,6 +1059,11 @@ Last Updated: 02/25/2026
     rightPanelTitle = blockHeader;
     currentDatasetMode = "split";
 
+    isSingleVisualizationMode = false;
+    main.classList.remove("single-mode");
+    tableViewRight.style.display = "";
+    downloadLiabilityChart.style.display = "";
+
     // collect rows inside just this block
     let inBlock = false;
     const blockRows = [];
@@ -1095,6 +1131,68 @@ Last Updated: 02/25/2026
     currentLiabilityVariable = blockHeader;
 
     recomputeAdjustedData();
+    updateChart();
+    toggleSelection();
+  }
+
+  async function buildSingleTotalsTable(fname, title, source) {
+    const { rawData, csvHeaders } = await loadCSV(fname);
+
+    leftTable.innerHTML = '';
+    rightTable.innerHTML = '';
+    excludedSeries.clear();
+    adjustedData = [];
+    currentDatasetMode = "single";
+    isSingleVisualizationMode = true;
+    downloadLiabilityChart.style.display = "none";
+
+    leftPanelTitle = title;
+    rightPanelTitle = title;
+
+    main.classList.add("single-mode");
+    tableViewRight.style.display = "none";
+
+    const h1 = document.createElement("h1");
+    h1.textContent = title;
+    leftTable.appendChild(h1);
+
+    const rootUl = document.createElement("ul");
+    leftTable.appendChild(rootUl);
+
+    rawData.forEach(row => {
+      row.section = "left";
+
+      const li = nestedList(row.cols[0], false);
+      li.dataset.plotValue = row.cols[0];
+      li.dataset.section = "left";
+      rootUl.appendChild(li);
+    });
+
+    assignVarCodes(leftTable);
+    refreshTableUI(leftTable);
+    addSideButtons(leftTable);
+
+    const years = csvHeaders
+      .slice(1)
+      .map(Number)
+      .filter(y => !isNaN(y));
+
+    appliedStart = startYear = minYear = Math.min(...years);
+    appliedEnd = endYear = maxYear = Math.max(...years);
+    sliderYears.textContent = `${minYear} - ${maxYear}`;
+    resetSlider();
+
+    curSource = source;
+
+    currentAssetVariable = title;
+    currentLiabilityVariable = null;
+
+    adjustedData = rawData.map(row => ({
+      ...row,
+      section: "left",
+      cols: [...row.cols]
+    }));
+
     updateChart();
     toggleSelection();
   }
@@ -1193,25 +1291,34 @@ Last Updated: 02/25/2026
   let currentVariable = null;
 
   function updateChart() {
-    // Average Table View
     if (isAverageTableView) {
-
-      // hide charts
       assetsChart.parentElement.style.display = "none";
       liabilitiesChart.parentElement.style.display = "none";
 
-      // destroy chart instances if they exist
-      if (assetsChartInstance) { assetsChartInstance.destroy(); assetsChartInstance = null; }
-      if (liabilitiesChartInstance) { liabilitiesChartInstance.destroy(); liabilitiesChartInstance = null; }
+      if (assetsChartInstance) {
+        assetsChartInstance.destroy();
+        assetsChartInstance = null;
+      }
+      if (liabilitiesChartInstance) {
+        liabilitiesChartInstance.destroy();
+        liabilitiesChartInstance = null;
+      }
 
-      // show table panels
       tableViewLeft.style.display = "block";
-      tableViewRight.style.display = "block";
+      tableViewRight.style.display = isSingleVisualizationMode ? "none" : "block";
 
-      // render average tables
-      renderAverageTable(tableViewLeft);
-      renderAverageTable(tableViewRight);
+      if (currentDatasetMode === "single") {
+        renderAverageTableSingle(tableViewLeft);
+      } else {
+        renderAverageTable(tableViewLeft);
+        renderAverageTable(tableViewRight);
+      }
 
+      return;
+    }
+
+    if (currentDatasetMode === "single") {
+      updateSingleTotalsChart(assetsChart, tableViewLeft);
       return;
     }
 
@@ -1298,6 +1405,165 @@ Last Updated: 02/25/2026
         renderChart(label, years, rawVals, adjVals, canvasElement, type);
       });
     }
+  }
+
+  function updateSingleTotalsChart(canvasElement, tableElement) {
+    const selectedRows = rawData.filter(
+      r => !excludedSeries.has(`left||${r.cols[0]}`)
+    );
+
+    const allYears = csvHeaders.slice(1).map(Number);
+
+    let rawTotalSeries = allYears.map(() => 0);
+
+    selectedRows.forEach(row => {
+      const vals = row.cols.slice(1).map(v => parseFloat(v));
+      for (let i = 0; i < allYears.length; i++) {
+        const v = vals[i];
+        if (Number.isFinite(v)) rawTotalSeries[i] += v;
+      }
+    });
+
+    let adjustedTotalSeries = rawTotalSeries.slice();
+
+    selectedRows.forEach(row => {
+      const key = `left||${row.cols[0]}`;
+      if (!excludedSeries.has(key)) return;
+
+      const vals = row.cols.slice(1).map(v => parseFloat(v));
+      for (let i = 0; i < allYears.length; i++) {
+        const v = vals[i];
+        if (Number.isFinite(v)) adjustedTotalSeries[i] -= v;
+      }
+    });
+
+    rawTotalSeries = allYears.map(() => 0);
+    adjustedTotalSeries = allYears.map(() => 0);
+
+    rawData.forEach(row => {
+      const vals = row.cols.slice(1).map(v => parseFloat(v));
+      for (let i = 0; i < allYears.length; i++) {
+        const v = vals[i];
+        if (Number.isFinite(v)) rawTotalSeries[i] += v;
+      }
+    });
+
+    selectedRows.forEach(row => {
+      const vals = row.cols.slice(1).map(v => parseFloat(v));
+      for (let i = 0; i < allYears.length; i++) {
+        const v = vals[i];
+        if (Number.isFinite(v)) adjustedTotalSeries[i] += v;
+      }
+    });
+
+    if (isNormalized) {
+      const finiteRaw = rawTotalSeries.filter(v => Number.isFinite(v));
+      const finiteAdj = adjustedTotalSeries.filter(v => Number.isFinite(v));
+      const maxVal = Math.max(...finiteRaw, ...finiteAdj, 1);
+
+      rawTotalSeries = rawTotalSeries.map(v =>
+        Number.isFinite(v) ? (v / maxVal) * 100 : v
+      );
+      adjustedTotalSeries = adjustedTotalSeries.map(v =>
+        Number.isFinite(v) ? (v / maxVal) * 100 : v
+      );
+    }
+
+    if (isTableView) {
+      canvasElement.parentElement.style.display = "none";
+
+      main.classList.add("single-mode");
+      tableViewRight.style.display = "none";
+
+      tableElement.style.display = "block";
+      tableElement.style.gridColumn = "1 / -1";
+      tableElement.style.width = "100%";
+      tableElement.style.maxWidth = "100%";
+
+      if (assetsChartInstance) {
+        assetsChartInstance.destroy();
+        assetsChartInstance = null;
+      }
+
+      renderAnnualTableSingle(tableElement, allYears, rawTotalSeries, adjustedTotalSeries);
+      return;
+    }
+
+    tableElement.style.display = "none";
+    tableElement.style.gridColumn = "";
+    tableElement.style.width = "";
+    tableElement.style.maxWidth = "";
+    canvasElement.parentElement.style.display = "block";
+
+    if (assetsChartInstance) {
+      assetsChartInstance.destroy();
+      assetsChartInstance = null;
+    }
+
+    const years = [];
+    const filteredRaw = [];
+    const filteredAdjusted = [];
+
+    for (let i = 0; i < allYears.length; i++) {
+      if (allYears[i] >= startYear && allYears[i] <= endYear) {
+        years.push(allYears[i]);
+        filteredRaw.push(rawTotalSeries[i]);
+        filteredAdjusted.push(adjustedTotalSeries[i]);
+      }
+    }
+
+    assetsChartInstance = new Chart(canvasElement, {
+      type: "line",
+      data: {
+        labels: years,
+        datasets: [
+          {
+            label: "Raw",
+            data: filteredRaw,
+            borderColor: "blue",
+            borderWidth: 2,
+            fill: false,
+            tension: 0.1
+          },
+          {
+            label: "Adjusted",
+            data: filteredAdjusted,
+            borderColor: "red",
+            borderWidth: 2,
+            borderDash: [5, 5],
+            fill: false,
+            tension: 0.1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          title: {
+            display: true,
+            text: leftPanelTitle,
+            font: { size: 16 }
+          },
+          legend: { display: true }
+        },
+        scales: {
+          x: { title: { display: true, text: "Year" } },
+          y: {
+            title: {
+              display: true,
+              text: isNormalized ? "Normalized Value (0-100)" : "Value"
+            },
+            ticks: {
+              callback: function(v) {
+                return isNormalized ? Math.round(v) : v.toLocaleString();
+              }
+            }
+          }
+        }
+      }
+    });
   }
 
   function renderChart(label, years, rawValues, adjValues, canvasElement, type) {
@@ -1438,6 +1704,44 @@ function renderTable(label, years, rawValues, adjValues, tableElement) {
   tableElement.innerHTML = html;
 }
 
+function renderAnnualTableSingle(tableElement, allYears, rawSeries, adjustedSeries) {
+  let html = `<h3 style="margin: 0; text-align:center;">${leftPanelTitle}</h3>`;
+
+  if (isNormalized) {
+    html += `<p style="text-align:center; margin:0.5rem 0; color:#666; font-size:0.9rem;">
+      Values normalized to 0-100 scale
+    </p>`;
+  }
+
+  html += `<table>
+    <thead>
+      <tr>
+        <th>Year</th>
+        <th>${isNormalized ? "Normalized Raw" : "Raw"}</th>
+        <th>${isNormalized ? "Normalized Adjusted" : "Adjusted"}</th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+  for (let i = 0; i < allYears.length; i++) {
+    const y = allYears[i];
+    const rawVal = rawSeries[i];
+    const adjVal = adjustedSeries[i];
+
+    if (y < startYear || y > endYear) continue;
+    if (!Number.isFinite(rawVal) && !Number.isFinite(adjVal)) continue;
+
+    html += `<tr>
+      <td>${y}</td>
+      <td>${Number.isFinite(rawVal) ? (isNormalized ? rawVal.toFixed(2) : rawVal.toLocaleString()) : ""}</td>
+      <td>${Number.isFinite(adjVal) ? (isNormalized ? adjVal.toFixed(2) : adjVal.toLocaleString()) : ""}</td>
+    </tr>`;
+  }
+
+  html += `</tbody></table>`;
+  tableElement.innerHTML = html;
+}
+
 /*------------------------------------------------------------------------------------------------------------*/
 
 /* Average Table View */
@@ -1529,6 +1833,78 @@ function renderAverageTable(tableElement) {
       <td>${item.code || ""}</td>
       <td>${rawCell}</td>
       <td>${adjCell}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table>`;
+  tableElement.innerHTML = html;
+}
+
+function renderAverageTableSingle(tableElement) {
+  const allYears = csvHeaders.slice(1).map(Number);
+
+  let html = `<h3 style="margin: 0; text-align:center;">${leftPanelTitle}</h3>`;
+  html += `<p style="text-align:center; margin:0.4rem 0; color:#666; font-size:0.9rem;">
+    Average values over ${startYear}–${endYear}
+  </p>`;
+
+  if (isNormalized) {
+    html += `<p style="text-align:center; margin:0.2rem 0 0.6rem; color:#666; font-size:0.9rem;">
+      Values normalized to 0–100 scale
+    </p>`;
+  }
+
+  html += `<table>
+    <thead>
+      <tr>
+        <th>Category</th>
+        <th>${isNormalized ? "Normalized Raw" : "Raw"}</th>
+        <th>${isNormalized ? "Normalized Adjusted" : "Adjusted"}</th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+  rawData.forEach(row => {
+    const key = `left||${row.cols[0]}`;
+
+    let rawVals = row.cols.slice(1).map(v => parseFloat(v));
+    let adjustedVals = excludedSeries.has(key)
+      ? row.cols.slice(1).map(() => 0)
+      : row.cols.slice(1).map(v => parseFloat(v));
+
+    if (isNormalized) {
+      const finiteRaw = rawVals.filter(v => Number.isFinite(v));
+      const finiteAdj = adjustedVals.filter(v => Number.isFinite(v));
+      const maxVal = Math.max(...finiteRaw, ...finiteAdj, 1);
+
+      rawVals = rawVals.map(v => Number.isFinite(v) ? (v / maxVal) * 100 : v);
+      adjustedVals = adjustedVals.map(v => Number.isFinite(v) ? (v / maxVal) * 100 : v);
+    }
+
+    let rawSum = 0, rawCount = 0;
+    let adjSum = 0, adjCount = 0;
+
+    for (let i = 0; i < allYears.length; i++) {
+      if (allYears[i] < startYear || allYears[i] > endYear) continue;
+
+      if (Number.isFinite(rawVals[i])) {
+        rawSum += rawVals[i];
+        rawCount++;
+      }
+
+      if (Number.isFinite(adjustedVals[i])) {
+        adjSum += adjustedVals[i];
+        adjCount++;
+      }
+    }
+
+    const rawAvg = rawCount ? rawSum / rawCount : null;
+    const adjAvg = adjCount ? adjSum / adjCount : null;
+
+    html += `<tr>
+      <td>${row.cols[0]}</td>
+      <td>${rawAvg == null ? "" : (isNormalized ? rawAvg.toFixed(2) : Math.round(rawAvg).toLocaleString())}</td>
+      <td>${adjAvg == null ? "" : (isNormalized ? adjAvg.toFixed(2) : Math.round(adjAvg).toLocaleString())}</td>
     </tr>`;
   });
 
