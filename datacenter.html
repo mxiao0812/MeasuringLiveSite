@@ -925,13 +925,14 @@ Last Updated: 04/08/2026
           stack.push({ name: value, indent, depth: 1 });
         }
       }
+
+      if (endRow && value === endRow) endRowFound = true;
+
       assignVarCodes(leftTable);
       assignVarCodes(rightTable);
 
       refreshTableUI(leftTable);
       refreshTableUI(rightTable);
-
-      if (endRow && value === endRow) endRowFound = true;
     }
   );
 
@@ -998,19 +999,6 @@ Last Updated: 04/08/2026
       li.dataset.section = sectionName;
 
       rootUl.appendChild(li);
-    });
-
-    const childUl = document.createElement("ul");
-    childUl.style.display = "block";
-    rootLi.appendChild(childUl);
-
-    rows.forEach((row) => {
-      const value = row.cols[0];
-
-      const li = nestedList(value, false);
-      li.dataset.plotValue = value;
-      li.dataset.section = sectionName;
-      childUl.appendChild(li);
     });
   }
 
