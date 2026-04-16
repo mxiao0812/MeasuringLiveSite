@@ -516,19 +516,54 @@ Last Updated: 04/08/2026
     }
 
     // split tables
-    const baseRoot = rawData.find(r => r.cols[0] === currentAssetVariable);
-    if (!baseRoot) return;
+    const yearsCount = csvHeaders.length - 1;
+
+    const leftRootVals = Array(yearsCount).fill(null);
+    const rightRootVals = Array(yearsCount).fill(null);
+
+    rawData.forEach(row => {
+      const vals = row.cols.slice(1).map(v => parseFloat(v));
+      const add = row.cols[0].startsWith("Less:");
+      const original = (row.originalName || "").trim();
+
+      const isTopLevelMarker =
+        row.indent <= 2 && (original.startsWith("=") || original.startsWith("+"));
+
+      if (row.section === "left") {
+        for (let i = 0; i < yearsCount; i++) {
+          const v = vals[i];
+          if (!Number.isFinite(v)) continue;
+
+          if (leftRootVals[i] === null) leftRootVals[i] = 0;
+          leftRootVals[i] += add ? -v : v;
+        }
+      }
+
+      if (row.section === "right") {
+        if (isTopLevelMarker) return;
+
+        for (let i = 0; i < yearsCount; i++) {
+          const v = vals[i];
+          if (!Number.isFinite(v)) continue;
+
+          if (rightRootVals[i] === null) rightRootVals[i] = 0;
+          rightRootVals[i] += add ? -v : v;
+        }
+      }
+    });
 
     const leftRoot = {
-      ...baseRoot,
+      cols: [currentAssetVariable, ...leftRootVals],
       section: "left",
-      cols: [...baseRoot.cols]
+      indent: 0,
+      originalName: currentAssetVariable
     };
 
     const rightRoot = {
-      ...baseRoot,
+      cols: [currentLiabilityVariable, ...rightRootVals],
       section: "right",
-      cols: [...baseRoot.cols]
+      indent: 0,
+      originalName: currentLiabilityVariable
     };
 
     adjustedData.push(leftRoot);
@@ -545,35 +580,31 @@ Last Updated: 04/08/2026
         if (excludedSeries.has(rowKey)) {
           for (let i = 1; i < leftRoot.cols.length; i++) {
             let val = parseFloat(row.cols[i]);
-            val = isNaN(val) ? 0 : val;
+            if (!Number.isFinite(val)) continue;
+            if (leftRoot.cols[i] == null) continue;
+
             leftRoot.cols[i] += add ? val : -val;
           }
         }
         return;
       }
 
-      if (row.section === "right") {
-        const isTopLevelMarker =
-          row.indent <= 2 && (original.startsWith("=") || original.startsWith("+"));
+      if (excludedSeries.has(rowKey)) {
+        for (let i = 1; i < rightRoot.cols.length; i++) {
+          let val = parseFloat(row.cols[i]);
+          if (!Number.isFinite(val)) continue;
+          if (rightRoot.cols[i] == null) continue;
 
-        if (isTopLevelMarker) {
-          currentRightCategory = row;
-          return;
+          rightRoot.cols[i] += add ? val : -val;
         }
 
-        if (excludedSeries.has(rowKey)) {
-          for (let i = 1; i < rightRoot.cols.length; i++) {
+        if (currentRightCategory) {
+          for (let i = 1; i < currentRightCategory.cols.length; i++) {
             let val = parseFloat(row.cols[i]);
-            val = isNaN(val) ? 0 : val;
-            rightRoot.cols[i] += add ? val : -val;
-          }
+            if (!Number.isFinite(val)) continue;
+            if (currentRightCategory.cols[i] == null) continue;
 
-          if (currentRightCategory) {
-            for (let i = 1; i < currentRightCategory.cols.length; i++) {
-              let val = parseFloat(row.cols[i]);
-              val = isNaN(val) ? 0 : val;
-              currentRightCategory.cols[i] += add ? val : -val;
-            }
+            currentRightCategory.cols[i] += add ? val : -val;
           }
         }
       }
@@ -630,6 +661,11 @@ Last Updated: 04/08/2026
       const key = li.dataset.plotValue;
       const section = li.dataset.section;
       if (!key || !section) return;
+
+      if (currentDatasetMode === "split" && section === "right") {
+        const hasChildren = !!li.querySelector("ul");
+        if (hasChildren) return;
+      }
 
       const k = `${section}||${key}`;
       if (makeExcluded) excludedSeries.add(k);
@@ -1486,15 +1522,13 @@ Last Updated: 04/08/2026
 
     if (currentDatasetMode === "split") {
       const sideRows = rawData.filter(r => r.section === targetSection);
-
-      const rawSeries = allYears.map(() => 0);
+      const rawSeries = allYears.map(() => null);
 
       sideRows.forEach(row => {
         const original = (row.originalName || "").trim();
         const isTopLevelMarker =
           row.indent <= 2 && (original.startsWith("=") || original.startsWith("+"));
 
-        // right-side marker rows are just group labels
         if (targetSection === "right" && isTopLevelMarker) return;
 
         const vals = row.cols.slice(1).map(v => parseFloat(v));
@@ -1503,21 +1537,27 @@ Last Updated: 04/08/2026
         for (let i = 0; i < allYears.length; i++) {
           const v = vals[i];
           if (!Number.isFinite(v)) continue;
+
+          if (rawSeries[i] === null) rawSeries[i] = 0;
           rawSeries[i] += add ? -v : v;
         }
       });
 
       allRaw = rawSeries;
 
-      // use LAST match because split mode appends synthetic root rows later
       const matches = adjustedData.filter(
         r => r.section === targetSection && r.cols[0] === label
       );
       const rowAdjusted = matches.length ? matches[matches.length - 1] : null;
 
-      allAdj = rowAdjusted
-        ? rowAdjusted.cols.slice(1).map(v => parseFloat(v))
-        : allRaw.slice();
+      if (rowAdjusted) {
+        allAdj = rowAdjusted.cols.slice(1).map(v => {
+          const num = parseFloat(v);
+          return Number.isFinite(num) ? num : null;
+        });
+      } else {
+        allAdj = allRaw.slice();
+      }
 
     } else {
       const row = rawData.find(
@@ -1536,12 +1576,14 @@ Last Updated: 04/08/2026
     }
 
     if (isNormalized) {
-      const maxRaw = Math.max(...allRaw.filter(v => Number.isFinite(v)), 1);
-      const maxAdj = Math.max(...allAdj.filter(v => Number.isFinite(v)), 1);
+      const finiteRaw = allRaw.filter(v => Number.isFinite(v));
+      const finiteAdj = allAdj.filter(v => Number.isFinite(v));
+      const maxRaw = finiteRaw.length ? Math.max(...finiteRaw) : 1;
+      const maxAdj = finiteAdj.length ? Math.max(...finiteAdj) : 1;
       const maxVal = Math.max(maxRaw, maxAdj, 1);
 
-      allRaw = allRaw.map(v => Number.isFinite(v) ? (v / maxVal) * 100 : v);
-      allAdj = allAdj.map(v => Number.isFinite(v) ? (v / maxVal) * 100 : v);
+      allRaw = allRaw.map(v => Number.isFinite(v) ? (v / maxVal) * 100 : null);
+      allAdj = allAdj.map(v => Number.isFinite(v) ? (v / maxVal) * 100 : null);
     }
 
     const years = [];
