@@ -21,6 +21,61 @@ Last Updated: 04/08/2026
   <link rel="icon" type="image/png" href="images/HHEI.png">
   <!-- Charts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .irs-dataset-group {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 2px;
+    }
+    .irs-dataset-group .irs-main {
+      margin-bottom: 0;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    .irs-view-toggle {
+      display: none;
+      flex-direction: row;
+    }
+    .irs-dataset-group.open .irs-view-toggle {
+      display: flex;
+    }
+    .irs-view-btn {
+      flex: 1;
+      padding: 4px 0;
+      font-size: 0.78rem;
+      font-family: inherit;
+      cursor: pointer;
+      border: 1px solid #aaa;
+      border-top: none;
+      background: #f0f0f0;
+      color: #333;
+      transition: background 0.15s;
+    }
+    .irs-view-btn:first-child {
+      border-bottom-left-radius: 4px;
+    }
+    .irs-view-btn:last-child {
+      border-bottom-right-radius: 4px;
+      border-left: none;
+    }
+    .irs-view-btn.active {
+      background: #555;
+      color: #fff;
+      font-weight: bold;
+    }
+    .irs-view-btn:hover:not(.active) {
+      background: #ddd;
+    }
+    #dataset-title {
+      text-align: center;
+      font-size: 1.05rem;
+      font-weight: 600;
+      font-family: inherit;
+      color: #333;
+      padding: 6px 0 2px;
+      letter-spacing: 0.01em;
+    }
+  </style>
 </head>
 
 <!-------------------------------------------------------------------------------------------------------------------->
@@ -98,37 +153,52 @@ Last Updated: 04/08/2026
   </a>
 
   <!-- All Corporations -->
-  <button id="allcorp" class="selection-entry active" onclick=
-    "buildTables(
-      'allcorp',
-      'Total assets', 
-      'Less:  Cost of treasury stock',
-      headers = ['Total assets', 'Total liabilities'],
-      '𝘚𝘵𝘢𝘵𝘪𝘴𝘵𝘪𝘤𝘴 𝘰𝘧 𝘐𝘯𝘤𝘰𝘮𝘦. Internal Revenue Sevice. Washington, D.C.'
-    ); highlightDataset(this);"
-  ><p> All Corporations </p></button>
+  <div class="irs-dataset-group" id="group-allcorp">
+    <button class="selection-entry irs-main active" id="allcorp"
+      onclick="selectIRSDataset('allcorp'); highlightDataset(this);">
+      <p>All Corporations</p>
+    </button>
+    <div class="irs-view-toggle" id="toggle-allcorp">
+      <button class="irs-view-btn active" onclick="setIRSView('allcorp','pct')">% of GDP</button>
+      <button class="irs-view-btn" onclick="setIRSView('allcorp','raw')">Raw ($)</button>
+    </div>
+  </div>
 
   <!-- S Corporations -->
-  <button id="scorp" class="selection-entry" onclick=
-    "buildTables(
-      'scorp',
-      'Total assets', 
-      'Less:  Cost of treasury stock (1966-2019)',
-      headers = ['Total assets', 'Total liabilities'],
-      '𝘚𝘵𝘢𝘵𝘪𝘴𝘵𝘪𝘤𝘴 𝘰𝘧 𝘐𝘯𝘤𝘰𝘮𝘦. Internal Revenue Sevice. Washington, D.C.'
-    ); highlightDataset(this);"
-  ><p> S Corporations </p></button>
+  <div class="irs-dataset-group" id="group-scorp">
+    <button class="selection-entry irs-main" id="scorp"
+      onclick="selectIRSDataset('scorp'); highlightDataset(this);">
+      <p>S Corporations</p>
+    </button>
+    <div class="irs-view-toggle" id="toggle-scorp">
+      <button class="irs-view-btn active" onclick="setIRSView('scorp','pct')">% of GDP</button>
+      <button class="irs-view-btn" onclick="setIRSView('scorp','raw')">Raw ($)</button>
+    </div>
+  </div>
 
   <!-- Partnerships -->
-  <button id="partners" class="selection-entry" onclick=
-    "buildTables(
-      'partners',
-      'Total assets', 
-      'Partners\' capital accounts',
-      headers = ['Total assets', 'Total liabilities and capital'],
-      '𝘚𝘵𝘢𝘵𝘪𝘴𝘵𝘪𝘤𝘴 𝘰𝘧 𝘐𝘯𝘤𝘰𝘮𝘦. Internal Revenue Sevice. Washington, D.C.'
-    ); highlightDataset(this);"
-  > <p> Partnerships </p> </button>
+  <div class="irs-dataset-group" id="group-partners">
+    <button class="selection-entry irs-main" id="partners"
+      onclick="selectIRSDataset('partners'); highlightDataset(this);">
+      <p>Partnerships</p>
+    </button>
+    <div class="irs-view-toggle" id="toggle-partners">
+      <button class="irs-view-btn active" onclick="setIRSView('partners','pct')">% of GDP</button>
+      <button class="irs-view-btn" onclick="setIRSView('partners','raw')">Raw ($)</button>
+    </div>
+  </div>
+
+  <!-- Sole Proprietorships -->
+  <div class="irs-dataset-group" id="group-soleprop">
+    <button class="selection-entry irs-main" id="soleprop"
+      onclick="selectIRSDataset('soleprop'); highlightDataset(this);">
+      <p>Sole Proprietorships</p>
+    </button>
+    <div class="irs-view-toggle" id="toggle-soleprop">
+      <button class="irs-view-btn active" onclick="setIRSView('soleprop','pct')">% of GDP</button>
+      <button class="irs-view-btn" onclick="setIRSView('soleprop','raw')">Raw ($)</button>
+    </div>
+  </div>
 
 
   <!-- BEA National Income and Product Accounts (NIPA) -->
@@ -139,7 +209,7 @@ Last Updated: 04/08/2026
   </a>
 
   <button id="DomesticProductAndIncome" class="selection-entry" onclick=
-    "buildTables(
+    "isPercentOfGDP=false; currentIRSDataset=null; document.querySelectorAll('.irs-dataset-group').forEach(g=>g.classList.remove('open')); setDatasetTitle('BEA – Gross Domestic Product and Income'); buildTables(
       'GDPGDI',
       'Gross domestic product', 
       'Statistical discrepancy',
@@ -151,7 +221,7 @@ Last Updated: 04/08/2026
   <!-- Add new datasets here -->
 
   <button id="AdjustedAccounts" class="selection-entry" onclick=
-    "buildTables(
+    "isPercentOfGDP=false; currentIRSDataset=null; document.querySelectorAll('.irs-dataset-group').forEach(g=>g.classList.remove('open')); setDatasetTitle('BEA – Adjusted Gross Domestic Product and Income'); buildTables(
       'adjustedgdpgdi',
       'Adjusted GDP', 
       '',
@@ -166,7 +236,7 @@ Last Updated: 04/08/2026
 
   <!-- Individual Totals -->
   <button id="individual_totals" class="selection-entry" onclick="
-    buildSingleTotalsTable(
+    isPercentOfGDP=false; currentIRSDataset=null; document.querySelectorAll('.irs-dataset-group').forEach(g=>g.classList.remove('open')); setDatasetTitle('Individual Totals'); buildSingleTotalsTable(
       'Individual_Totals',
       'Individual Totals',
       'Source description TBA.'
@@ -175,7 +245,7 @@ Last Updated: 04/08/2026
 
   <!-- Table 2 GDI Time Series -->
   <button id="table2_gdi" class="selection-entry" onclick="
-    buildAdjustedSplitTable(
+    isPercentOfGDP=false; currentIRSDataset=null; document.querySelectorAll('.irs-dataset-group').forEach(g=>g.classList.remove('open')); setDatasetTitle('Table 2 – Adjusted GDI'); buildAdjustedSplitTable(
       'table2_timeseries',
       'ADJUSTED GDI',
       'NIPA GDI',
@@ -185,7 +255,7 @@ Last Updated: 04/08/2026
 
   <!-- Table 2 GDP Time Series -->
   <button id="table2_gdp" class="selection-entry" onclick="
-    buildAdjustedSplitTable(
+    isPercentOfGDP=false; currentIRSDataset=null; document.querySelectorAll('.irs-dataset-group').forEach(g=>g.classList.remove('open')); setDatasetTitle('Table 2 – Adjusted GDP'); buildAdjustedSplitTable(
       'table2_timeseries',
       'ADJUSTED GDP',
       'NIPA GDP',
@@ -195,7 +265,7 @@ Last Updated: 04/08/2026
 
   <!-- Table 6 GDI Time Series -->
   <!-- <button id="table6_gdi" class="selection-entry" onclick="
-    buildAdjustedSplitTable(
+    isPercentOfGDP=false; currentIRSDataset=null; document.querySelectorAll('.irs-dataset-group').forEach(g=>g.classList.remove('open')); buildAdjustedSplitTable(
       'table6_timeseries',
       'ADJUSTED GDI',
       'NIPA GDI',
@@ -205,7 +275,7 @@ Last Updated: 04/08/2026
 
   <!-- Table 6 GDP Time Series -->
   <!-- <button id="table6_gdp" class="selection-entry" onclick="
-    buildAdjustedSplitTable(
+    isPercentOfGDP=false; currentIRSDataset=null; document.querySelectorAll('.irs-dataset-group').forEach(g=>g.classList.remove('open')); buildAdjustedSplitTable(
       'table6_timeseries',
       'ADJUSTED GDP',
       'NIPA GDP',
@@ -225,6 +295,9 @@ Last Updated: 04/08/2026
     
   <!-- Chart -->
   <div id="chart-container" class="content-container">
+
+    <!-- Dataset Title -->
+    <div id="dataset-title"></div>
 
     <!-- Chart Download -->
     <div id="download-button-container">
@@ -315,7 +388,15 @@ Last Updated: 04/08/2026
   let rightPanelTitle = "Liabilities";
 
   let currentDatasetMode = "regular";
+  let legacyModeActive = false;
   let isSingleVisualizationMode = false;
+  let isPercentOfGDP = false;   // true when viewing IRS data as % of GDP
+  let currentIRSDataset = "allcorp"; // which IRS dataset is active
+  const datasetTitleEl = document.getElementById("dataset-title");
+
+  function setDatasetTitle(text) {
+    datasetTitleEl.textContent = text;
+  }
 
   /* YEAR SELECT */
   const sliderYears = document.getElementById("slider-years");
@@ -350,7 +431,8 @@ Last Updated: 04/08/2026
 
   // Number datasets
   selectionEntries.forEach((item, index) => {
-      item.querySelector('p').textContent = `${index + 1}. ${item.textContent}`
+    const p = item.querySelector('p');
+    if (p) p.textContent = `${index + 1}. ${p.textContent.trim()}`;
   });
 
   // Bold dataset on click
@@ -375,6 +457,89 @@ Last Updated: 04/08/2026
   
   // Track current data source
   let curSource;
+
+  // IRS dataset config: raw file, raw panel rows; pct file, pct panel rows
+  const IRS_DATASETS = {
+    allcorp:  { raw: { file: 'allcorp',              left: 5, right: 32 },
+                pct: { file: 'transformed_allcorp',  left: 5, right: 32 } },
+    scorp:    { raw: { file: 'scorp',                left: 2, right: 25 },
+                pct: { file: 'transformed_scorp',    left: 2, right: 25 } },
+    partners: { raw: { file: 'partners',             left: 6, right: 29 },
+                pct: { file: 'transformed_partners', left: 6, right: 29 } },
+    soleprop: { raw: { file: 'soleprop',             left: 4, right: 7  },
+                pct: { file: 'transformed_soleprop', left: 2, right: 5  },
+                leftLabel: 'Business Receipts, Total',
+                rightLabel: 'Business Deductions, Total' },
+  };
+  // Track per-dataset view mode so switching back remembers the mode
+  const irsViewModes = { allcorp: 'pct', scorp: 'pct', partners: 'pct', soleprop: 'pct' };
+
+  const IRS_SOURCE = '𝘚𝘵𝘢𝘵𝘪𝘴𝘵𝘪𝘤𝘴 𝘰𝘧 𝘐𝘯𝘤𝘰𝘮𝘦. Internal Revenue Sevice. Washington, D.C.';
+
+  /**
+   * Called when an IRS dataset main button is clicked.
+   * Loads the dataset using the currently remembered view mode for that dataset.
+   */
+  function selectIRSDataset(id) {
+    // Close all groups, open the clicked one
+    document.querySelectorAll('.irs-dataset-group').forEach(g => g.classList.remove('open'));
+    document.getElementById('group-' + id).classList.add('open');
+
+    currentIRSDataset = id;
+    const mode = irsViewModes[id] || 'pct';
+    _loadIRSDataset(id, mode);
+  }
+
+  /**
+   * Called when a Raw/% of GDP sub-button is clicked.
+   * Switches the view for the currently active IRS dataset.
+   */
+  function setIRSView(id, mode) {
+    irsViewModes[id] = mode;
+
+    // Update sub-button active states
+    const toggleEl = document.getElementById('toggle-' + id);
+    toggleEl.querySelectorAll('.irs-view-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.textContent.trim() === (mode === 'pct' ? '% of GDP' : 'Raw ($)'));
+    });
+
+    // If this dataset is already active, reload it
+    if (currentIRSDataset === id) {
+      _loadIRSDataset(id, mode);
+    }
+  }
+
+  const IRS_DISPLAY_NAMES = {
+    allcorp:  'IRS All Corporations',
+    scorp:    'IRS S Corporations',
+    partners: 'IRS Partnerships',
+    soleprop: 'IRS Sole Proprietorships',
+  };
+
+  async function _loadIRSDataset(id, mode) {
+    const ds = IRS_DATASETS[id];
+    const cfg = ds[mode];
+    isPercentOfGDP = (mode === 'pct');
+    const modeLabel = mode === 'pct' ? 'Percent of GDP' : 'Raw';
+    setDatasetTitle(`${IRS_DISPLAY_NAMES[id]} – ${modeLabel}`);
+    await buildTables(cfg.file, cfg.left, cfg.right, IRS_SOURCE);
+
+    // Apply display label overrides if defined (e.g. soleprop)
+    if (ds.leftLabel || ds.rightLabel) {
+      if (ds.leftLabel) {
+        leftPanelTitle = ds.leftLabel;
+        const h1 = leftTable.querySelector('h1');
+        if (h1) h1.textContent = ds.leftLabel;
+      }
+      if (ds.rightLabel) {
+        rightPanelTitle = ds.rightLabel;
+        const h1 = rightTable.querySelector('h1');
+        if (h1) h1.textContent = ds.rightLabel;
+      }
+      // Re-render charts with updated titles
+      updateChart();
+    }
+  }
 
   /**
    *  Parses a single CSV line into an array.
@@ -470,6 +635,93 @@ Last Updated: 04/08/2026
     return { rawData, csvHeaders };
   }
 
+  /**
+   * Recursively adjusts a panel root's values when descendants are excluded.
+   * Uses the formula-based tree (or indentation fallback) to walk ancestors.
+   *
+   * For each excluded leaf: propagate its signed value up through all ancestors
+   * to the panel root, respecting whether the leaf is an add (+) or subtract (-) term.
+   */
+  function applyExclusionsToRoot(rootRowInAdj, panelRow, excludedSeries, section) {
+    // Build a map from row name -> adjustedData row for fast lookup
+    const nameToAdj = new Map();
+    adjustedData.forEach(r => nameToAdj.set(r.cols[0], r));
+
+    // Recursively walk the tree; returns net values contributed by this subtree
+    // so we can subtract the excluded portion from ancestors.
+    // Subtract a leaf's contribution (by its net sign) from all ancestors.
+    function subtractLeafFromAncestors(leafRow, leafNetSign, ancestorChain) {
+      for (const anc of ancestorChain) {
+        const ancAdj = nameToAdj.get(anc.row.cols[0]);
+        if (!ancAdj) continue;
+        for (let i = 1; i < ancAdj.cols.length; i++) {
+          let val = parseFloat(leafRow.cols[i]);
+          if (isNaN(val)) val = 0;
+          ancAdj.cols[i] -= leafNetSign * val;
+        }
+      }
+    }
+
+    // Recursively subtract all leaves in a subtree from ancestors.
+    // Used when a parent node itself is marked excluded.
+    function subtractSubtreeFromAncestors(subtreeParentIdx1, netSign, ancestorChain) {
+      const children = getDirectChildren(rawData, subtreeParentIdx1);
+      for (const child of children) {
+        if (child.row.cols[0].includes("Addendum")) continue;
+        const childNetSign = netSign * child.sign;
+        const grandchildren = getDirectChildren(rawData, child.rowIdx);
+        const hasNonAddendumChildren = grandchildren.some(gc => !gc.row.cols[0].includes("Addendum"));
+        if (hasNonAddendumChildren) {
+          subtractSubtreeFromAncestors(child.rowIdx, childNetSign, ancestorChain);
+        } else {
+          subtractLeafFromAncestors(child.row, childNetSign, ancestorChain);
+        }
+      }
+    }
+
+    function walkAndAdjust(parentIdx1, parentAdjRow, ancestorChain) {
+      const children = getDirectChildren(rawData, parentIdx1);
+
+      for (const child of children) {
+        if (child.row.cols[0].includes("Addendum")) continue;
+
+        const childAdjRow = nameToAdj.get(child.row.cols[0]);
+        if (!childAdjRow) continue;
+
+        const rowKey = `${section}||${child.row.cols[0]}`;
+        const grandchildren = getDirectChildren(rawData, child.rowIdx);
+        const hasNonAddendumChildren = grandchildren.some(gc => !gc.row.cols[0].includes("Addendum"));
+
+        // Check if any ancestor is already excluded (covers this node)
+        const coveredByAncestor = ancestorChain.some(
+          anc => excludedSeries.has(`${section}||${anc.row.cols[0]}`)
+        );
+
+        if (excludedSeries.has(rowKey) && !coveredByAncestor) {
+          // Excluded node: always expand down to leaves and subtract each leaf's
+          // actual value from ancestors. This ensures excluding a parent gives the
+          // exact same result as excluding all its children individually.
+          if (hasNonAddendumChildren) {
+            subtractSubtreeFromAncestors(child.rowIdx, child.sign, ancestorChain);
+          } else {
+            subtractLeafFromAncestors(child.row, child.sign, ancestorChain);
+          }
+          // Don't recurse further into this excluded subtree
+          continue;
+        }
+
+        if (!coveredByAncestor && hasNonAddendumChildren) {
+          // Non-excluded intermediate node — recurse
+          walkAndAdjust(child.rowIdx, childAdjRow, [...ancestorChain, { row: child.row, sign: child.sign }]);
+        }
+        // Non-excluded leaf: contributes normally, nothing to adjust
+      }
+    }
+
+    // Start walk from the panel root; ancestorChain starts with the root itself
+    walkAndAdjust(panelRow, rootRowInAdj, [{ row: rawData[panelRow - 1], sign: 1 }]);
+  }
+
   function recomputeAdjustedData() {
     adjustedData = rawData.map(row => ({
       ...row,
@@ -478,38 +730,43 @@ Last Updated: 04/08/2026
 
     // regular datasets
     if (currentDatasetMode === "regular") {
-      const stack = [];
+      if (legacyModeActive) {
+        // Legacy (indent-based) datasets: use the original stack approach
+        const stack = [];
+        adjustedData.forEach(row => {
+          if (row.cols[0] === leftPanelTitle || row.cols[0] === rightPanelTitle) {
+            stack.length = 0; stack.push(row); return;
+          }
+          while (stack.length && stack[stack.length - 1].indent >= row.indent) stack.pop();
+          const add = row.cols[0].startsWith("Less:");
+          const rowKey = `${row.section}||${row.cols[0]}`;
+          const coveredByAncestor = stack.some(anc => excludedSeries.has(`${anc.section}||${anc.cols[0]}`));
+          if (excludedSeries.has(rowKey) && !coveredByAncestor) {
+            stack.forEach(ancestor => {
+              for (let i = 1; i < ancestor.cols.length; i++) {
+                let val = parseFloat(row.cols[i]);
+                ancestor.cols[i] += add ? (isNaN(val) ? 0 : val) : -(isNaN(val) ? 0 : val);
+              }
+            });
+          }
+          stack.push(row);
+        });
+        return;
+      }
 
-      adjustedData.forEach(row => {
-        if (row.cols[0] === leftPanelTitle || row.cols[0] === rightPanelTitle) {
-          stack.length = 0;
-        }
+      // Formula-based datasets
+      const leftRootAdj  = adjustedData.find(r => r.cols[0] === leftPanelTitle);
+      const rightRootAdj = adjustedData.find(r => r.cols[0] === rightPanelTitle);
 
-        while (stack.length && stack[stack.length - 1].indent >= row.indent) {
-          stack.pop();
-        }
+      const leftPanelRowIdx  = rawData.findIndex(r => r.cols[0] === leftPanelTitle)  + 1;
+      const rightPanelRowIdx = rawData.findIndex(r => r.cols[0] === rightPanelTitle) + 1;
 
-        const add = row.cols[0].startsWith("Less:");
-        const rowKey = `${row.section}||${row.cols[0]}`;
-
-        // NEW:
-        // if any excluded ancestor is already in effect, do not subtract this row again
-        const coveredByExcludedAncestor = stack.some(
-          ancestor => excludedSeries.has(`${ancestor.section}||${ancestor.cols[0]}`)
-        );
-
-        if (excludedSeries.has(rowKey) && !coveredByExcludedAncestor) {
-          stack.forEach(ancestor => {
-            for (let i = 1; i < ancestor.cols.length; i++) {
-              let val = parseFloat(row.cols[i]);
-              val = isNaN(val) ? 0 : val;
-              ancestor.cols[i] += add ? val : -val;
-            }
-          });
-        }
-
-        stack.push(row);
-      });
+      if (leftRootAdj && leftPanelRowIdx > 0) {
+        applyExclusionsToRoot(leftRootAdj,  leftPanelRowIdx,  excludedSeries, "left");
+      }
+      if (rightRootAdj && rightPanelRowIdx > 0) {
+        applyExclusionsToRoot(rightRootAdj, rightPanelRowIdx, excludedSeries, "right");
+      }
 
       return;
     }
@@ -604,8 +861,13 @@ Last Updated: 04/08/2026
     lis.forEach(li => {
       if (!li.dataset.section || !li.dataset.plotValue) return;
 
-      const key = `${li.dataset.section}||${li.dataset.plotValue}`;
+      if (li.querySelector("ul")) {
+        // Parent: derive state from children
+        syncParentCheckmark(li);
+        return;
+      }
 
+      const key = `${li.dataset.section}||${li.dataset.plotValue}`;
       const check = li.querySelector(".checkmark");
       if (!check) return;
 
@@ -644,17 +906,14 @@ Last Updated: 04/08/2026
   }
 
   function setAllForSide(tableEl, makeExcluded) {
+    // Only touch leaf lis (no child <ul>); parents derive their state from children
     const allLis = Array.from(tableEl.querySelectorAll("li"));
 
     allLis.forEach(li => {
       const key = li.dataset.plotValue;
       const section = li.dataset.section;
       if (!key || !section) return;
-
-      if (currentDatasetMode === "split" && section === "right") {
-        const hasChildren = !!li.querySelector("ul");
-        if (hasChildren) return;
-      }
+      if (li.querySelector("ul")) return; // skip parents
 
       const k = `${section}||${key}`;
       if (makeExcluded) excludedSeries.add(k);
@@ -708,6 +967,11 @@ Last Updated: 04/08/2026
     li.appendChild(label);
 
     function syncCheckmark() {
+      // If this is a parent li, use the derived state from children
+      if (li.querySelector("ul")) {
+        syncParentCheckmark(li);
+        return;
+      }
       const key = `${li.dataset.section}||${li.dataset.plotValue}`;
       const isExcluded = excludedSeries.has(key);
       const code = li.dataset.varCode ? ` ${li.dataset.varCode}` : "";
@@ -721,8 +985,10 @@ Last Updated: 04/08/2026
       e.stopPropagation();
       const key = `${li.dataset.section}||${li.dataset.plotValue}`;
       if (!li.dataset.plotValue || !li.dataset.section) return;
-      toggleExclude(key);
-      syncCheckmark();
+      toggleExclude(key, li);
+      // Refresh all checkmarks in both tables (covers leaves and parents)
+      refreshTableUI(leftTable);
+      refreshTableUI(rightTable);
       updateChart();
     }
 
@@ -762,211 +1028,526 @@ Last Updated: 04/08/2026
   }
 
   /**
-   *  Builds two tables from CSV data that plot a selected variable when clicked. Dynamically creates
-   *    hierarchical structure of table based on the level of indentation used in the CSV.
-   * 
-   *  @param {String} fname - the filename of the CSV file.
-   *  @param {String} startRow - the text content of the first cell of the first CSV row you wish to use.
-   *  @param {String} endRow - the text content of the final cell of the first CSV row you wish to use.
-   *  @param {Array<String>} headers - a string array of the headers for each of the two tables.
-   *  @param {String} source - the source of the currently selected dataset 
-   *      - E.g., Statistics of Income. Internal Revenue Service.
-   * 
-   *  Note: the startRow nor endRow strings should EXCLUDE leading or trailing spaces
-  */ 
-  async function buildTables(fname, startRow, endRow, headers, source) {
-    // Pass in the right headers by CSV
-    leftPanelTitle = headers[0] || "Left";
-    rightPanelTitle = headers[1] || "Right";
+   *  Parses a formula annotation like "[ = sum(l.7:l.20) - sum(l.21:l.24) ]" from a row title.
+   *  Returns { addRanges: [[7,20]], subRanges: [[21,24]] } (1-based row numbers).
+   *  Returns null if no formula is present.
+   */
+  function parseFormula(title) {
+    const match = title.match(/\[\s*=\s*(.+?)\s*\]/);
+    if (!match) return null;
+
+    const expr = match[1];
+    const addRanges = [];
+    const subRanges = [];
+
+    // Split on + and - at top level to get terms
+    // Each term is like "sum(l.X:l.Y)" or "l.N"
+    const termRegex = /([+-]?\s*(?:sum\s*\(\s*l\.\s*\d+\s*:\s*l\.\s*\d+\s*\)|l\.\s*\d+))/gi;
+    let first = true;
+    let pos = 0;
+
+    // Parse sign by walking the expression
+    const signedTerms = [];
+    const raw = expr.trim();
+    let i = 0;
+    let currentSign = 1; // first term is positive
+
+    while (i < raw.length) {
+      // skip whitespace
+      while (i < raw.length && raw[i] === ' ') i++;
+      if (i >= raw.length) break;
+
+      // read sign if + or -
+      if (raw[i] === '+') { currentSign = 1; i++; continue; }
+      if (raw[i] === '-') { currentSign = -1; i++; continue; }
+
+      // read a term
+      const rangeMatch = raw.slice(i).match(/^sum\s*\(\s*l\.\s*(\d+)\s*:\s*l\.\s*(\d+)\s*\)/i);
+      const singleMatch = raw.slice(i).match(/^l\.\s*(\d+)/i);
+
+      if (rangeMatch) {
+        const from = parseInt(rangeMatch[1]);
+        const to   = parseInt(rangeMatch[2]);
+        (currentSign > 0 ? addRanges : subRanges).push([from, to]);
+        i += rangeMatch[0].length;
+        currentSign = 1;
+      } else if (singleMatch) {
+        const n = parseInt(singleMatch[1]);
+        (currentSign > 0 ? addRanges : subRanges).push([n, n]);
+        i += singleMatch[0].length;
+        currentSign = 1;
+      } else {
+        i++; // skip unknown char
+      }
+    }
+
+    return { addRanges, subRanges };
+  }
+
+  /**
+   *  Returns true if 1-based row number n is in any of the ranges.
+   */
+  function inRanges(n, ranges) {
+    return ranges.some(([from, to]) => n >= from && n <= to);
+  }
+
+  /**
+   *  Given a rawData array and a 1-based row index of a parent row,
+   *  returns { directChildren, sign } where directChildren is an array of
+   *  { rowIdx (1-based), sign (+1 or -1), row } for each direct child.
+   *  Falls back to indentation if no formula present.
+   */
+  function getDirectChildren(rawData, parentIdx1) {
+    const parentRow = rawData[parentIdx1 - 1]; // convert to 0-based
+    const formula = parseFormula(parentRow.cols[0]);
+
+    if (formula) {
+      const children = [];
+      rawData.forEach((row, i) => {
+        // Formula uses l.N where N = CSV line number (header = line 1, first data row = line 2).
+        // rawData[i] corresponds to CSV line i+2, so l.N = rawData[N-2], i.e. rawData 1-based = N-1.
+        // Inverse: rawData 1-based index j → formula l.(j+1).
+        const formulaLineNum = i + 2; // what l.N this rawData entry corresponds to
+        if (inRanges(formulaLineNum, formula.addRanges)) {
+          children.push({ rowIdx: i + 1, sign: 1, row });
+        } else if (inRanges(formulaLineNum, formula.subRanges)) {
+          children.push({ rowIdx: i + 1, sign: -1, row });
+        }
+      });
+      return children;
+    }
+
+    // Fallback: use indentation (for CSVs without formula annotations)
+    const parentIndent = parentRow.indent;
+    const children = [];
+    let childIndent = null;
+    for (let i = parentIdx1; i < rawData.length; i++) { // parentIdx1 is 0-based index of next row
+      const row = rawData[i];
+      if (row.indent <= parentIndent) break; // left the parent's subtree
+      if (childIndent === null) childIndent = row.indent;
+      if (row.indent === childIndent) {
+        const sign = row.cols[0].startsWith("Less:") ? -1 : 1;
+        children.push({ rowIdx: i + 1, sign, row });
+      }
+    }
+    return children;
+  }
+
+  /**
+   *  Recursively collects all leaf descendants of a parent row,
+   *  building up a prefix path for display.
+   *  Returns array of { row, displayText, sign (net: +1 or -1 relative to panel root) }.
+   *  Rows with "Addendum" in the name are skipped.
+   */
+  function collectLeaves(rawData, parentIdx1, prefixParts, netSign) {
+    const children = getDirectChildren(rawData, parentIdx1);
+    const leaves = [];
+
+    for (const child of children) {
+      if (child.row.cols[0].includes("Addendum")) continue;
+
+      const childSign = netSign * child.sign;
+      const grandchildren = getDirectChildren(rawData, child.rowIdx);
+      const hasNonAddendumChildren = grandchildren.some(gc => !gc.row.cols[0].includes("Addendum"));
+
+      if (hasNonAddendumChildren) {
+        // Intermediate node: recurse, prepending this name to prefix
+        const cleanName = child.row.cols[0].replace(/^Less:\s*/, "").replace(/\s*\[.*?\]\s*$/, "").trim();
+        leaves.push(...collectLeaves(rawData, child.rowIdx, [...prefixParts, cleanName], childSign));
+      } else {
+        // Leaf node: build display text
+        let cleanValue = child.row.cols[0].replace(/^Less:\s*/, "").trim();
+        const baseText = prefixParts.length
+          ? `${prefixParts.join(" - ")} - ${cleanValue}`
+          : cleanValue;
+        const displayText = childSign < 0 ? `Less: ${baseText}` : baseText;
+        leaves.push({ row: child.row, displayText, sign: childSign });
+      }
+    }
+
+    return leaves;
+  }
+
+  /**
+   *  Builds two tables from CSV data using row-number-based formula hierarchy.
+   *  If a row title contains [ = sum(l.X:l.Y) ... ] the formula defines children.
+   *  Falls back to indentation for CSVs without formulas.
+   *
+   *  @param {String} fname        - CSV filename (without extension, loaded from DATA/).
+   *  @param {Number} leftPanelRow - 1-based data row number for the left panel header.
+   *  @param {Number} rightPanelRow- 1-based data row number for the right panel header.
+   *  @param {String} source       - Citation string for the dataset.
+   */
+  async function buildTables(fname, leftPanelRowOrStart, rightPanelRowOrEnd, sourceOrHeaders, maybeSource) {
+    // Support legacy call style: (fname, startRow, endRow, headers, source)
+    // New call style: (fname, leftPanelRow, rightPanelRow, source)
+    let leftPanelRow, rightPanelRow, source;
+    let legacyMode = false;
+
+    if (typeof leftPanelRowOrStart === "string") {
+      // Legacy: fname, startRow, endRow, headers, source
+      legacyMode = true;
+      const startRow = leftPanelRowOrStart;
+      const endRow   = rightPanelRowOrEnd;
+      const headers  = sourceOrHeaders;
+      source         = maybeSource;
+
+      isSingleVisualizationMode = false;
+      main.classList.remove("single-mode");
+      tableViewRight.style.display = "";
+      downloadLiabilityChart.style.display = "";
+
+      legacyModeActive = true;
+      leftPanelTitle  = headers[0] || "Left";
+      rightPanelTitle = headers[1] || "Right";
+
+      const { rawData, csvHeaders } = await loadCSV(fname);
+
+      leftTable.innerHTML  = '';
+      rightTable.innerHTML = '';
+      excludedSeries.clear();
+      adjustedData = [];
+      currentDatasetMode = "regular";
+
+      let startRowFound = false, endRowFound = false;
+      let sectionContainer = leftTable, currentSection = "left";
+
+      const stack = [];
+      let sectionRootUl = null;
+
+      rawData.forEach((row, idx) => {
+        const value = row.cols[0];
+        const indent = row.indent;
+
+        if (value === headers[0]) currentSection = "left";
+        if (value === headers[1]) currentSection = "right";
+        row.section = currentSection;
+
+        if (value === startRow) startRowFound = true;
+        if (!startRowFound || endRowFound) return;
+        if (value.includes("Addendum")) return;
+
+        if (headers.includes(value)) {
+          if (value === headers[0]) sectionContainer = leftTable;
+          if (value === headers[1]) sectionContainer = rightTable;
+
+          const h1 = document.createElement("h1");
+          h1.textContent = (sectionContainer === leftTable) ? leftPanelTitle : rightPanelTitle;
+          sectionContainer.appendChild(h1);
+          stack.length = 0;
+          sectionRootUl = null;
+        } else {
+          while (stack.length && indent <= stack[stack.length - 1].indent) stack.pop();
+
+          const nextRow = rawData[idx + 1];
+          const nextIndent = nextRow ? nextRow.indent : -1;
+          const willHaveChildren = nextIndent > indent;
+
+          if (!sectionRootUl) {
+            sectionRootUl = document.createElement("ul");
+            sectionContainer.appendChild(sectionRootUl);
+          }
+
+          if (stack.length === 0) {
+            const li = nestedList(value, willHaveChildren);
+            li.dataset.plotValue = value;
+            li.dataset.section = (sectionContainer === leftTable) ? "left" : "right";
+            sectionRootUl.appendChild(li);
+            let childUl = null;
+            if (willHaveChildren) {
+              childUl = document.createElement("ul");
+              childUl.style.display = "block";
+              li.appendChild(childUl);
+            }
+            stack.push({ name: value, indent, depth: 0, childUl });
+          } else {
+            let topIdx = -1;
+            for (let i = stack.length - 1; i >= 0; i--) {
+              if (stack[i].depth === 0) { topIdx = i; break; }
+            }
+            const top = stack[topIdx];
+            if (willHaveChildren) { stack.push({ name: value, indent, depth: 1 }); return; }
+            const prefixParts = stack.slice(topIdx + 1).map(s => s.name);
+            let cleanValue = value.replace(/^Less:\s*/, "");
+            const baseText = prefixParts.length ? `${prefixParts.join(" - ")} - ${cleanValue}` : cleanValue;
+            const displayText = value.startsWith("Less:") ? `Less: ${baseText}` : baseText;
+            if (!top.childUl) {
+              top.childUl = document.createElement("ul");
+              top.childUl.style.display = "block";
+              sectionRootUl.lastElementChild.appendChild(top.childUl);
+            }
+            const li = nestedList(displayText, false);
+            li.dataset.plotValue = displayText; // unique display text as key
+            li.dataset.section = (sectionContainer === leftTable) ? "left" : "right";
+            top.childUl.appendChild(li);
+            stack.push({ name: value, indent, depth: 1 });
+          }
+        }
+
+        if (endRow && value === endRow) endRowFound = true;
+        assignVarCodes(leftTable); assignVarCodes(rightTable);
+        refreshTableUI(leftTable); refreshTableUI(rightTable);
+      });
+
+      addSideButtons(leftTable);
+      addSideButtons(rightTable);
+
+      const years = csvHeaders.slice(1).map(Number).filter(y => !isNaN(y));
+      appliedStart = startYear = minYear = Math.min(...years);
+      appliedEnd   = endYear   = maxYear = Math.max(...years);
+      sliderYears.textContent = `${minYear} - ${maxYear}`;
+      resetSlider();
+      curSource = source;
+      currentAssetVariable     = headers[0];
+      currentLiabilityVariable = headers[1];
+      updateChart();
+      toggleSelection();
+      return;
+    }
+
+    // New style: fname, leftPanelRow, rightPanelRow, source
+    legacyModeActive = false;
+    leftPanelRow  = leftPanelRowOrStart;
+    rightPanelRow = rightPanelRowOrEnd;
+    source        = sourceOrHeaders;
 
     isSingleVisualizationMode = false;
     main.classList.remove("single-mode");
     tableViewRight.style.display = "";
     downloadLiabilityChart.style.display = "";
-    
-    const { rawData, csvHeaders } = await loadCSV(fname); // Load data
+
+    const { rawData, csvHeaders } = await loadCSV(fname);
+
+    // Identify the panel header rows (1-based index into rawData)
+    const leftRow  = rawData[leftPanelRow  - 1];
+    const rightRow = rawData[rightPanelRow - 1];
+
+    leftPanelTitle  = leftRow  ? leftRow.cols[0]  : "Left";
+    rightPanelTitle = rightRow ? rightRow.cols[0] : "Right";
+
+    // Mark sections on all rows so recomputeAdjustedData can use them
+    rawData.forEach((row, i) => {
+      const rn = i + 1;
+      if      (rn === leftPanelRow)  row.section = "left";
+      else if (rn === rightPanelRow) row.section = "right";
+      else                           row.section = null;
+    });
+
+    // Propagate section to children using formula / indentation
+    function markSection(parentIdx1, section) {
+      const children = getDirectChildren(rawData, parentIdx1);
+      for (const child of children) {
+        child.row.section = section;
+        markSection(child.rowIdx, section);
+      }
+    }
+    markSection(leftPanelRow,  "left");
+    markSection(rightPanelRow, "right");
 
     // Clear tables & data
-    leftTable.innerHTML = '';
+    leftTable.innerHTML  = '';
     rightTable.innerHTML = '';
     excludedSeries.clear();
     adjustedData = [];
-    const stack = [];
-    let sectionRootUl = null;
     currentDatasetMode = "regular";
 
-    // Initialize state variables
-    let startRowFound = false;
-    let endRowFound = false;
-    let sectionContainer = leftTable;
-    let currentSection = "left";
+    // Build each panel
+    function buildPanel(panelRow, container, section) {
+      const headerRow = rawData[panelRow - 1];
+      const displayTitle = headerRow.cols[0].replace(/\s*\[.*?\]\s*$/, "").trim();
 
-    rawData.forEach((row, idx) => {
+      const h1 = document.createElement("h1");
+      h1.textContent = displayTitle;
+      container.appendChild(h1);
 
-      // Get variable name and indent
-      const value = row.cols[0];
-      const indent = row.indent;
+      const rootUl = document.createElement("ul");
+      container.appendChild(rootUl);
 
-      // Track which big block we're currently in
-      if (value === headers[0]) currentSection = "left";
-      if (value === headers[1]) currentSection = "right";
+      // Get direct children of the panel root
+      const directChildren = getDirectChildren(rawData, panelRow);
 
-      // Attach section to the row so we can uniquely identify duplicates later
-      row.section = currentSection;
+      for (const child of directChildren) {
+        if (child.row.cols[0].includes("Addendum")) continue;
 
-      if (value === startRow) startRowFound = true;
-      if (!startRowFound || endRowFound) return;
+        const grandchildren = getDirectChildren(rawData, child.rowIdx);
+        const hasNonAddendumChildren = grandchildren.some(gc => !gc.row.cols[0].includes("Addendum"));
 
-      if (value.includes("Addendum")) return;
+        const childDisplayName = child.row.cols[0].replace(/\s*\[.*?\]\s*$/, "").trim();
 
-      // Variable names
-      if (headers.includes(value)) {
+        if (hasNonAddendumChildren) {
+          // Top-level item with children — render as collapsible parent
+          const li = nestedList(childDisplayName, true);
+          li.dataset.plotValue = childDisplayName; // unique display name as key
+          li.dataset.section = section;
+          rootUl.appendChild(li);
 
-        // Always put headers[0] on the left and headers[1] on the right
-        if (value === headers[0]) sectionContainer = leftTable;
-        if (value === headers[1]) sectionContainer = rightTable;
+          const childUl = document.createElement("ul");
+          childUl.style.display = "block";
+          li.appendChild(childUl);
 
-        // Construct table header
-        const h1 = document.createElement("h1");
-        h1.textContent = (sectionContainer === leftTable) ? leftPanelTitle : rightPanelTitle;
-        sectionContainer.appendChild(h1);
+          // Collect all leaves recursively, with this child's name as prefix
+          const cleanName = childDisplayName.replace(/^Less:\s*/, "");
+          const netSign = child.sign;
+          const leaves = collectLeaves(rawData, child.rowIdx, [], netSign);
 
-        stack.length = 0;
-        sectionRootUl = null;
-
-      } else { // Non-header value
-
-        // Pop variables from the stack with a lower indent than current variable thus not an ancestor)
-        while (stack.length && indent <= stack[stack.length - 1].indent) {
-          stack.pop();
-        }
-
-        // Determine original hierarchy
-        const nextRow = rawData[idx + 1];
-        const nextIndent = nextRow ? nextRow.indent : -1;
-        const willHaveChildren = nextIndent > indent;
-
-        // Ensure a section root <ul> exists for this table section
-        if (!sectionRootUl) {
-          sectionRootUl = document.createElement("ul");
-          sectionContainer.appendChild(sectionRootUl);
-        }
-
-        // Top-level row
-        if (stack.length === 0) {
-          const li = nestedList(value, willHaveChildren);
-          li.dataset.plotValue = value;
-          li.dataset.section = (sectionContainer === leftTable) ? "left" : "right";
-          sectionRootUl.appendChild(li);
-
-          let childUl = null;
-          if (willHaveChildren) {
-            childUl = document.createElement("ul");
-            childUl.style.display = "block";
-            li.appendChild(childUl);
+          for (const leaf of leaves) {
+            const leafLi = nestedList(leaf.displayText, false);
+            leafLi.dataset.plotValue = leaf.displayText; // unique display text as key
+            leafLi.dataset.section = section;
+            childUl.appendChild(leafLi);
           }
-
-          // Track this top-level parent (and keep its childUl reference)
-          stack.push({
-            name: value,
-            indent,
-            depth: 0,
-            childUl
-          });
-
-        } else { // Flatten under the nearest top-level ancestor
-
-          // Find nearest top-level ancestor in the stack (depth === 0)
-          let topIdx = -1;
-          for (let i = stack.length - 1; i >= 0; i--) {
-            if (stack[i].depth === 0) { topIdx = i; break; }
-          }
-          const top = stack[topIdx];
-
-          if (willHaveChildren) {
-            stack.push({ name: value, indent, depth: 1 });
-            return;
-          }
-
-          // Leaf: render it as a direct child of the top-level parent with a prefix
-          const prefixParts = stack.slice(topIdx + 1).map(s => s.name);
-          let cleanValue = value.replace(/^Less:\s*/, "");
-
-          const baseText = prefixParts.length
-            ? `${prefixParts.join(" - ")} - ${cleanValue}`
-            : cleanValue;
-
-          const displayText = value.startsWith("Less:")
-            ? `Less: ${baseText}`
-            : baseText;
-
-          // Ensure top-level has a child <ul> to receive flattened children
-          if (!top.childUl) {
-            top.childUl = document.createElement("ul");
-            top.childUl.style.display = "block";
-
-            const topLi = sectionRootUl.lastElementChild;
-            topLi.appendChild(top.childUl);
-          }
-
-          const li = nestedList(displayText, false);
-          li.dataset.plotValue = value;
-          li.dataset.section = (sectionContainer === leftTable) ? "left" : "right";
-          top.childUl.appendChild(li);
-
-          stack.push({ name: value, indent, depth: 1 });
+        } else {
+          // Leaf item at top level
+          const li = nestedList(childDisplayName, false);
+          li.dataset.plotValue = childDisplayName; // unique display name as key
+          li.dataset.section = section;
+          rootUl.appendChild(li);
         }
       }
-
-      if (endRow && value === endRow) endRowFound = true;
-
-      assignVarCodes(leftTable);
-      assignVarCodes(rightTable);
-
-      refreshTableUI(leftTable);
-      refreshTableUI(rightTable);
     }
-  );
 
-    addSideButtons(leftTable, "assets");
-    addSideButtons(rightTable, "liabilities");
+    buildPanel(leftPanelRow,  leftTable,  "left");
+    buildPanel(rightPanelRow, rightTable, "right");
 
-    // Additional state updates
+    addSideButtons(leftTable);
+    addSideButtons(rightTable);
+
+    assignVarCodes(leftTable);
+    assignVarCodes(rightTable);
+    refreshTableUI(leftTable);
+    refreshTableUI(rightTable);
 
     // Reset slider
     const years = csvHeaders.slice(1).map(Number).filter(y => !isNaN(y));
     appliedStart = startYear = minYear = Math.min(...years);
-    appliedEnd = endYear = maxYear = Math.max(...years);
+    appliedEnd   = endYear   = maxYear = Math.max(...years);
     sliderYears.textContent = `${minYear} - ${maxYear}`;
     resetSlider();
 
-    curSource = source; // Update chart source
+    curSource = source;
 
-    // Plot initial variables for both charts
-    const firstRow = rawData.find(r => r.cols[0].trim() === startRow);
-    if (firstRow) {
-      currentAssetVariable = headers[0];      // Total assets
-      currentLiabilityVariable = headers[1];  // Total liabilities
-      
-      updateChart();  // Update both charts
-    }
+    currentAssetVariable     = leftPanelTitle;
+    currentLiabilityVariable = rightPanelTitle;
 
-    toggleSelection(); // Toggle dataset selection menu
+    updateChart();
+    toggleSelection();
   }
 
   /**
-   *  Function to exclude/include value of nested variables on click.
-   * 
-   *  @param {String} variable - the text of the nested variable to be excluded
-   * 
-   */ 
-  function toggleExclude(variable) {
+   *  Returns all leaf keys (section||name) under a given li element (or the li itself if it's a leaf).
+   */
+  function getLeafKeys(li) {
+    const childUl = li.querySelector("ul");
+    if (!childUl) {
+      // It's a leaf
+      if (li.dataset.section && li.dataset.plotValue) {
+        return [`${li.dataset.section}||${li.dataset.plotValue}`];
+      }
+      return [];
+    }
+    // It's a parent — collect all leaf keys recursively from children
+    const keys = [];
+    Array.from(childUl.querySelectorAll("li")).forEach(childLi => {
+      if (!childLi.querySelector("ul") && childLi.dataset.section && childLi.dataset.plotValue) {
+        keys.push(`${childLi.dataset.section}||${childLi.dataset.plotValue}`);
+      }
+    });
+    return keys;
+  }
 
-    // Toggle whether variable is included or excluded
-    if (excludedSeries.has(variable)) {
-      excludedSeries.delete(variable);
+  /**
+   *  Finds the li element in a table for a given key (section||plotValue).
+   */
+  function findLiByKey(key, tableEl) {
+    const [section, plotValue] = key.split("||");
+    return Array.from(tableEl.querySelectorAll("li")).find(
+      li => li.dataset.section === section && li.dataset.plotValue === plotValue
+    ) || null;
+  }
+
+  /**
+   *  Derives the visual state of a parent li from its children's excluded state.
+   *  Returns "all-excluded", "all-included", or "partial".
+   */
+  function getParentState(parentLi) {
+    const childUl = parentLi.querySelector("ul");
+    if (!childUl) return "all-included";
+    const leafKeys = getLeafKeys(parentLi);
+    if (leafKeys.length === 0) return "all-included";
+    const excludedCount = leafKeys.filter(k => excludedSeries.has(k)).length;
+    if (excludedCount === leafKeys.length) return "all-excluded";
+    if (excludedCount === 0) return "all-included";
+    return "partial";
+  }
+
+  /**
+   *  Syncs the checkmark of a parent li based on its children's state.
+   */
+  function syncParentCheckmark(parentLi) {
+    const check = parentLi.querySelector(":scope > .checkmark");
+    // Label is the span after the checkmark (not the arrow, not the child ul)
+    const directSpans = Array.from(parentLi.children).filter(el => el.tagName === "SPAN");
+    const label = directSpans.length > 1 ? directSpans[directSpans.length - 1] : null;
+    if (!check) return;
+    const state = getParentState(parentLi);
+    const code = parentLi.dataset.varCode ? ` ${parentLi.dataset.varCode}` : "";
+    if (state === "all-excluded") {
+      check.textContent = "✖" + code;
+      check.classList.add("excluded");
+      if (label) label.classList.add("excluded");
+      parentLi.classList.add("excluded");
+    } else if (state === "partial") {
+      check.textContent = "◐" + code;
+      check.classList.remove("excluded");
+      if (label) label.classList.remove("excluded");
+      parentLi.classList.remove("excluded");
     } else {
-      excludedSeries.add(variable);
+      check.textContent = "✔" + code;
+      check.classList.remove("excluded");
+      if (label) label.classList.remove("excluded");
+      parentLi.classList.remove("excluded");
+    }
+  }
+
+  /**
+   *  After changing excludedSeries, sync all parent checkmarks in both tables.
+   */
+  function syncAllParentCheckmarks() {
+    [leftTable, rightTable].forEach(tableEl => {
+      tableEl.querySelectorAll("li").forEach(li => {
+        if (li.querySelector("ul")) syncParentCheckmark(li);
+      });
+    });
+  }
+
+  /**
+   *  Toggle logic with cascading:
+   *  - Clicking a parent: if any child is selected, exclude all leaves; else include all leaves.
+   *  - Clicking a leaf: toggle just that leaf. If its parent was "all-excluded", the parent
+   *    becomes partial (other children stay excluded).
+   *
+   *  excludedSeries only ever contains leaf keys.
+   */
+  function toggleExclude(clickedKey, clickedLi) {
+    const isParent = !!(clickedLi && clickedLi.querySelector("ul"));
+
+    if (isParent) {
+      const leafKeys = getLeafKeys(clickedLi);
+      const state = getParentState(clickedLi);
+      if (state === "all-excluded") {
+        // Select all: remove all children from excluded
+        leafKeys.forEach(k => excludedSeries.delete(k));
+      } else {
+        // Deselect all: add all children to excluded
+        leafKeys.forEach(k => excludedSeries.add(k));
+      }
+    } else {
+      // Leaf toggle
+      if (excludedSeries.has(clickedKey)) {
+        excludedSeries.delete(clickedKey);
+      } else {
+        excludedSeries.add(clickedKey);
+      }
     }
 
     recomputeAdjustedData();
@@ -1744,7 +2325,7 @@ Last Updated: 04/08/2026
           y: {
             title: {
               display: true,
-              text: isNormalized ? "Normalized Value (0-100)" : "Value"
+              text: isNormalized ? "Normalized Value (0-100)" : (isPercentOfGDP ? "% of GDP" : "Value (millions of dollars)")
             },
             ticks: {
               callback: function(v) {
@@ -1777,7 +2358,7 @@ Last Updated: 04/08/2026
         plugins: {
           title: { 
             display: true, 
-            text: (type === 'assets') ? leftPanelTitle : rightPanelTitle,
+            text: ((type === 'assets') ? leftPanelTitle : rightPanelTitle).replace(/\s*\[.*?\]\s*$/g, '').trim(),
             font: { size: 16 } 
           },
           legend: { display: true }
@@ -1787,7 +2368,7 @@ Last Updated: 04/08/2026
           y: {
             title: {
               display: true,
-              text: isNormalized ? 'Normalized Value (0-100)' : 'Raw Value (in dollars)'
+              text: isNormalized ? 'Normalized Value (0-100)' : (isPercentOfGDP ? '% of GDP' : 'Value (millions of dollars)')
             },
             ticks: {
               callback: function(v) {
@@ -2260,13 +2841,9 @@ function renderAverageTableSingle(tableElement) {
   // Build first table 
   window.addEventListener("resize", resetSlider);
   window.addEventListener("load", () => {
-    buildTables(
-      "allcorp",
-      "Total assets",
-      "Less:  Cost of treasury stock",
-      headers = ["Total assets", "Total liabilities"],
-      "𝘚𝘵𝘢𝘵𝘪𝘴𝘵𝘪𝘤𝘴 𝘰𝘧 𝘐𝘯𝘤𝘰𝘮𝘦. Internal Revenue Sevice. Washington, D.C."
-    );
+    // Open the allcorp group and load default (pct of GDP)
+    document.getElementById('group-allcorp').classList.add('open');
+    _loadIRSDataset('allcorp', 'pct');
   });
 
   // Force charts to resize when window changes
