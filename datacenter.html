@@ -1645,7 +1645,7 @@ Last Updated: 04/08/2026
         return;
       }
 
-      if (inBlock && (value === "ADJUSTED GDI" || value === "ADJUSTED GDP")) {
+      if (inBlock && (value === "ADJUSTED GDI" || value === "ADJUSTED GDP" || value.startsWith("=> C-corp share"))) {
         inBlock = false;
       }
 
@@ -2035,6 +2035,95 @@ Last Updated: 04/08/2026
 
   let currentVariable = null;
 
+  /**
+   * Extracts the filtered+processed data series for one side (assets or liabilities)
+   * without rendering anything. Returns { years, rawVals, adjVals } or null.
+   */
+  function extractChartData(type, label) {
+    const targetSection = (type === "assets") ? "left" : "right";
+    const allYears = csvHeaders.slice(1).map(Number);
+
+    let allRaw = [];
+    let allAdj = [];
+
+    if (currentDatasetMode === "split") {
+      const sideRows = rawData.filter(r => r.section === targetSection);
+      const rawSeries = allYears.map(() => null);
+
+      sideRows.forEach(row => {
+        const original = (row.originalName || "").trim();
+        const isTopLevelMarker =
+          row.indent <= 2 && (original.startsWith("=") || original.startsWith("+"));
+        if (targetSection === "right" && isTopLevelMarker) return;
+
+        const vals = row.cols.slice(1).map(v => parseFloat(v));
+        const add = row.cols[0].startsWith("Less:");
+        for (let i = 0; i < allYears.length; i++) {
+          const v = vals[i];
+          if (!Number.isFinite(v)) continue;
+          if (rawSeries[i] === null) rawSeries[i] = 0;
+          rawSeries[i] += add ? -v : v;
+        }
+      });
+      allRaw = rawSeries;
+
+      const matches = adjustedData.filter(
+        r => r.section === targetSection && r.cols[0] === label
+      );
+      const rowAdjusted = matches.length ? matches[matches.length - 1] : null;
+      allAdj = rowAdjusted
+        ? rowAdjusted.cols.slice(1).map(v => { const n = parseFloat(v); return Number.isFinite(n) ? n : null; })
+        : allRaw.slice();
+
+    } else {
+      const row = rawData.find(r => r.section === targetSection && r.cols[0] === label);
+      if (!row) return null;
+      allRaw = row.cols.slice(1).map(v => parseFloat(v));
+      const rowAdjusted = adjustedData.find(r => r.section === targetSection && r.cols[0] === label);
+      allAdj = rowAdjusted
+        ? rowAdjusted.cols.slice(1).map(v => parseFloat(v))
+        : allRaw.slice();
+    }
+
+    if (isNormalized) {
+      const finiteRaw = allRaw.filter(v => Number.isFinite(v));
+      const finiteAdj = allAdj.filter(v => Number.isFinite(v));
+      const maxRaw = finiteRaw.length ? Math.max(...finiteRaw) : 1;
+      const maxAdj = finiteAdj.length ? Math.max(...finiteAdj) : 1;
+      const maxVal = Math.max(maxRaw, maxAdj, 1);
+      allRaw = allRaw.map(v => Number.isFinite(v) ? (v / maxVal) * 100 : null);
+      allAdj = allAdj.map(v => Number.isFinite(v) ? (v / maxVal) * 100 : null);
+    }
+
+    const years = [], rawVals = [], adjVals = [];
+    for (let i = 0; i < allYears.length; i++) {
+      const y = allYears[i];
+      if (y >= startYear && y <= endYear) {
+        years.push(y);
+        rawVals.push(allRaw[i]);
+        adjVals.push(allAdj[i]);
+      }
+    }
+    return { years, rawVals, adjVals };
+  }
+
+  /**
+   * Computes a shared [min, max] across two data objects from extractChartData.
+   */
+  function computeSharedScale(leftData, rightData) {
+    const allVals = [];
+    [leftData, rightData].forEach(d => {
+      if (!d) return;
+      d.rawVals.forEach(v => { if (Number.isFinite(v)) allVals.push(v); });
+      d.adjVals.forEach(v => { if (Number.isFinite(v)) allVals.push(v); });
+    });
+    if (!allVals.length) return { min: undefined, max: undefined };
+    const dataMin = Math.min(...allVals);
+    const dataMax = Math.max(...allVals);
+    const padding = (dataMax - dataMin) * 0.05 || Math.abs(dataMax) * 0.05 || 1;
+    return { min: dataMin - padding, max: dataMax + padding };
+  }
+
   function updateChart() {
     if (isAverageTableView) {
       assetsChart.parentElement.style.display = "none";
@@ -2067,18 +2156,45 @@ Last Updated: 04/08/2026
       return;
     }
 
+    // Compute shared y-axis scale across both panels
+    const leftData  = currentAssetVariable     ? extractChartData('assets',      currentAssetVariable)     : null;
+    const rightData = currentLiabilityVariable ? extractChartData('liabilities', currentLiabilityVariable) : null;
+    const sharedScale = computeSharedScale(leftData, rightData);
+
     if (currentAssetVariable) {
-      updateSingleChart('assets', currentAssetVariable, assetsChart, tableViewLeft);
+      updateSingleChart('assets', currentAssetVariable, assetsChart, tableViewLeft, leftData, sharedScale);
     }
     if (currentLiabilityVariable) {
-      updateSingleChart('liabilities', currentLiabilityVariable, liabilitiesChart, tableViewRight);
+      updateSingleChart('liabilities', currentLiabilityVariable, liabilitiesChart, tableViewRight, rightData, sharedScale);
     }
   }
 
   /**
    *  Updates chart variable and year range.
+   *  precomputedData (optional): { years, rawVals, adjVals } from extractChartData.
+   *  sharedScale (optional): { min, max } to sync y-axis across both panels.
    */ 
-  function updateSingleChart(type, label, canvasElement, tableElement) {
+  function updateSingleChart(type, label, canvasElement, tableElement, precomputedData, sharedScale) {
+    // Use pre-computed data when supplied by updateChart (shared-scale path);
+    // otherwise fall through to compute it below.
+    if (precomputedData) {
+      const { years, rawVals, adjVals } = precomputedData;
+      if (isTableView) {
+        canvasElement.parentElement.style.display = "none";
+        tableElement.style.display = "block";
+        if (type === "assets" && assetsChartInstance) { assetsChartInstance.destroy(); assetsChartInstance = null; }
+        if (type === "liabilities" && liabilitiesChartInstance) { liabilitiesChartInstance.destroy(); liabilitiesChartInstance = null; }
+        renderTable(label, years, rawVals, adjVals, tableElement);
+      } else {
+        tableElement.style.display = "none";
+        canvasElement.parentElement.style.display = "block";
+        if (type === "assets" && assetsChartInstance) { assetsChartInstance.destroy(); assetsChartInstance = null; }
+        if (type === "liabilities" && liabilitiesChartInstance) { liabilitiesChartInstance.destroy(); liabilitiesChartInstance = null; }
+        requestAnimationFrame(() => { renderChart(label, years, rawVals, adjVals, canvasElement, type, sharedScale); });
+      }
+      return;
+    }
+
     const targetSection = (type === "assets") ? "left" : "right";
     const allYears = csvHeaders.slice(1).map(Number);
 
@@ -2284,6 +2400,13 @@ Last Updated: 04/08/2026
       }
     }
 
+    const singleAllVals = [...filteredRaw, ...filteredAdjusted].filter(v => Number.isFinite(v));
+    const singleMin = singleAllVals.length ? Math.min(...singleAllVals) : undefined;
+    const singleMax = singleAllVals.length ? Math.max(...singleAllVals) : undefined;
+    const singlePadding = (singleMin !== undefined && singleMax !== undefined)
+      ? ((singleMax - singleMin) * 0.05 || Math.abs(singleMax) * 0.05 || 1)
+      : 0;
+
     assetsChartInstance = new Chart(canvasElement, {
       type: "line",
       data: {
@@ -2323,6 +2446,7 @@ Last Updated: 04/08/2026
         scales: {
           x: { title: { display: true, text: "Year" } },
           y: {
+            ...(singleMin !== undefined ? { min: singleMin - singlePadding, max: singleMax + singlePadding } : {}),
             title: {
               display: true,
               text: isNormalized ? "Normalized Value (0-100)" : (isPercentOfGDP ? "% of GDP" : "Value (millions of dollars)")
@@ -2338,8 +2462,25 @@ Last Updated: 04/08/2026
     });
   }
 
-  function renderChart(label, years, rawValues, adjValues, canvasElement, type) {
+  function renderChart(label, years, rawValues, adjValues, canvasElement, type, sharedScale) {
     const ctx = canvasElement;
+
+    // Build y-axis scale options — use shared bounds when provided
+    const yScaleOptions = {
+      title: {
+        display: true,
+        text: isNormalized ? 'Normalized Value (0-100)' : (isPercentOfGDP ? '% of GDP' : 'Value (millions of dollars)')
+      },
+      ticks: {
+        callback: function(v) {
+          if (isNormalized) { return Math.round(v); } else { return v.toLocaleString(); }
+        }
+      }
+    };
+    if (sharedScale && sharedScale.min !== undefined && sharedScale.max !== undefined) {
+      yScaleOptions.min = sharedScale.min;
+      yScaleOptions.max = sharedScale.max;
+    }
     
     // Construct chart
     const chart = new Chart(ctx, {
@@ -2365,21 +2506,7 @@ Last Updated: 04/08/2026
         },
         scales: {
           x: { title: { display: true, text: 'Year' } },
-          y: {
-            title: {
-              display: true,
-              text: isNormalized ? 'Normalized Value (0-100)' : (isPercentOfGDP ? '% of GDP' : 'Value (millions of dollars)')
-            },
-            ticks: {
-              callback: function(v) {
-                if (isNormalized) {
-                  return Math.round(v);
-                } else {
-                  return v.toLocaleString();
-                }
-              }
-            }
-          }
+          y: yScaleOptions
         }
       }
     });
